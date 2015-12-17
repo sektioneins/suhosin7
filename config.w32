@@ -1,0 +1,13 @@
+// $Id$
+// vim:ft=javascript
+
+// If your extension references something external, use ARG_WITH
+// ARG_WITH("suhosin7", "for suhosin7 support", "no");
+
+// Otherwise, use ARG_ENABLE
+// ARG_ENABLE("suhosin7", "enable suhosin7 support", "no");
+
+if (PHP_SUHOSIN7 != "no") {
+	EXTENSION("suhosin7", "suhosin7.c", PHP_EXTNAME_SHARED, "/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+}
+
