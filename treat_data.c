@@ -97,11 +97,11 @@ SAPI_TREAT_DATA_FUNC(suhosin_treat_data)
 	} else if (arg == PARSE_COOKIE) {		/* Cookie data */
 		c_var = SG(request_info).cookie_data;
 		if (c_var && *c_var) {
-			if (SUHOSIN7_G(cookie_encrypt)) {
-				res = (char *) estrdup(suhosin_cookie_decryptor());
-			} else {
+			// if (SUHOSIN7_G(cookie_encrypt)) {
+				// res = (char *) estrdup(suhosin_cookie_decryptor());
+			// } else {
 				res = (char *) estrdup(c_var);
-			}
+			// }
 			free_buffer = 1;
 		} else {
 			free_buffer = 0;
@@ -211,4 +211,3 @@ void suhosin_hook_treat_data()
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
  */
-

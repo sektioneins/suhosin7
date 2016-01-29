@@ -93,7 +93,7 @@ static PHP_FUNCTION(suhosin_sha256_file)
 
 	suhosin_SHA256Init(&context);
 
-	while ((n = php_stream_read(stream, buf, sizeof(buf))) > 0) {
+	while ((n = php_stream_read(stream, (char*)buf, sizeof(buf))) > 0) {
 		suhosin_SHA256Update(&context, buf, n);
 	}
 
@@ -394,7 +394,7 @@ static zend_function_entry suhosin_sha256_functions[] = {
 void suhosin_hook_sha256(TSRMLS_D)
 {
 	/* check if we already have sha256 support */
-	if (zend_hash_str_find(CG(function_table), "sha256", sizeof("sha256"))) {
+	if (zend_hash_str_find(CG(function_table), ZEND_STRL("sha256"))) {
 		return;		
 	}
 	

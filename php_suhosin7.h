@@ -24,7 +24,11 @@
 extern zend_module_entry suhosin7_module_entry;
 #define phpext_suhosin7_ptr &suhosin7_module_entry
 
-#define SUHOSIN7_EXT_VERSION  "0.10.0"
+#define SUHOSIN7_EXT_VERSION  "0.10.0dev"
+
+#if PHP_VERSION_ID < 70000 | PHP_VERSION_ID >= 70100
+#error Suhosin7 works with PHP 7.0 only! Looking for Suhosin for PHP 5.x? Take a look at https://www.suhosin.org/
+#endif
 
 #ifdef PHP_WIN32
 #	define PHP_SUHOSIN7_API __declspec(dllexport)
@@ -38,8 +42,85 @@ extern zend_module_entry suhosin7_module_entry;
 #include "TSRM.h"
 #endif
 
+/* -------------- */
+
+#define SUHOSIN_LOG "/tmp/suhosin_log.txt"
+
+#ifdef PHP_WIN32
+#define SDEBUG
+#else
+
+#ifdef SUHOSIN_DEBUG
+#define SDEBUG(msg...) \
+	{FILE *f;f=fopen(SUHOSIN_LOG, "a+");if(f){fprintf(f,"[%u] ",getpid());fprintf(f, msg);fprintf(f,"\n");fclose(f);}}
+#else
+#define SDEBUG(msg...)
+#endif    
+#endif
+
+/* -------------- */
+
 #define BYTE unsigned char       /* 8 bits  */
 #define WORD unsigned int          /* 32 bits */
+
+// PHP_MINIT_FUNCTION(suhosin);
+// PHP_MSHUTDOWN_FUNCTION(suhosin);
+// PHP_RINIT_FUNCTION(suhosin);
+// PHP_RSHUTDOWN_FUNCTION(suhosin);
+// PHP_MINFO_FUNCTION(suhosin);
+
+#include "ext/standard/basic_functions.h"
+
+static inline int suhosin_is_protected_varname(char *var, int var_len)
+{
+	switch (var_len) {
+		case 18:
+		if (memcmp(var, "HTTP_RAW_POST_DATA", 18)==0) goto protected_varname;
+		break;
+		case 17:
+		if (memcmp(var, "HTTP_SESSION_VARS", 17)==0) goto protected_varname;
+		break;
+		case 16:
+		if (memcmp(var, "HTTP_SERVER_VARS", 16)==0) goto protected_varname;
+		if (memcmp(var, "HTTP_COOKIE_VARS", 16)==0) goto protected_varname;
+		break;
+		case 15:
+		if (memcmp(var, "HTTP_POST_FILES", 15)==0) goto protected_varname;
+		break;
+		case 14:
+		if (memcmp(var, "HTTP_POST_VARS", 14)==0) goto protected_varname;
+		break;
+		case 13:
+		if (memcmp(var, "HTTP_GET_VARS", 13)==0) goto protected_varname;
+		if (memcmp(var, "HTTP_ENV_VARS", 13)==0) goto protected_varname;
+		break;
+		case 8:
+		if (memcmp(var, "_SESSION", 8)==0) goto protected_varname;
+		if (memcmp(var, "_REQUEST", 8)==0) goto protected_varname;
+		break;
+		case 7:
+		if (memcmp(var, "GLOBALS", 7)==0) goto protected_varname;
+		if (memcmp(var, "_COOKIE", 7)==0) goto protected_varname;
+		if (memcmp(var, "_SERVER", 7)==0) goto protected_varname;
+		break;
+		case 6:
+		if (memcmp(var, "_FILES", 6)==0) goto protected_varname;
+		break;
+		case 5:
+		if (memcmp(var, "_POST", 5)==0) goto protected_varname;
+		break;
+		case 4:
+		if (memcmp(var, "_ENV", 4)==0) goto protected_varname;
+		if (memcmp(var, "_GET", 4)==0) goto protected_varname;
+		break;
+	}
+
+	return 0;
+protected_varname:
+	return 1;
+}
+
+
 
 ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_long  global_value;
@@ -47,8 +128,29 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool	protectkey;
 
 	zend_bool	simulation;
+	zend_bool stealth;
 	zend_bool	already_scanned;
 	zend_bool	abort_request;
+	char *filter_action;
+
+	
+	zend_bool executor_allow_symlink;
+	long max_execution_depth;
+	long executor_include_max_traversal;
+	zend_bool executor_include_allow_writable_files;
+
+
+	HashTable *include_whitelist;
+	HashTable *include_blacklist;
+
+	HashTable *func_whitelist;
+	HashTable *func_blacklist;
+	HashTable *eval_whitelist;
+	HashTable *eval_blacklist;
+
+	zend_bool executor_disable_eval;
+	zend_bool executor_disable_emod;
+
 
 /*	request variables */
 	zend_long  max_request_variables;
@@ -108,7 +210,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool  upload_allow_utf8;
 #endif
 	char *upload_verification_script;
-        
+
 	zend_bool  no_more_variables;
 	zend_bool  no_more_get_variables;
 	zend_bool  no_more_post_variables;
@@ -119,9 +221,14 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	WORD fkey[120];
 	WORD rkey[120];
 	
-/*	memory_limit */
-	zend_long	memory_limit;
-	zend_long 	hard_memory_limit;
+	zend_bool	session_encrypt;
+	char*	session_cryptkey;
+	zend_bool	session_cryptua;
+	zend_bool	session_cryptdocroot;
+	long		session_cryptraddr;
+	long		session_checkraddr;
+
+	long	session_max_id_length;
 
 	char*	decrypted_cookie;
 	char*	raw_cookie;
@@ -133,6 +240,85 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	long		cookie_checkraddr;
 	HashTable *cookie_plainlist;
 	HashTable *cookie_cryptlist;
+
+	zend_bool	coredump;
+	zend_bool	apc_bug_workaround;
+	zend_bool       do_not_scan;
+
+	zend_bool	server_encode;
+	zend_bool	server_strip;
+
+	zend_bool	disable_display_errors;
+
+	php_uint32   r_state[625];
+	php_uint32   *r_next;
+	int          r_left;
+	zend_bool    srand_ignore;
+	zend_bool    mt_srand_ignore;
+	php_uint32   mt_state[625];
+	php_uint32   *mt_next;
+	int          mt_left;
+
+	char         *seedingkey;
+	zend_bool    reseed_every_request;
+
+	zend_bool r_is_seeded; 
+	zend_bool mt_is_seeded;
+
+
+/*	memory_limit */
+	zend_long	memory_limit;
+	zend_long 	hard_memory_limit;
+
+	
+
+
+	/* PERDIR Handling */
+	char *perdir;
+	zend_bool log_perdir;
+	zend_bool exec_perdir;
+	zend_bool get_perdir;
+	zend_bool post_perdir;
+	zend_bool cookie_perdir;
+	zend_bool request_perdir;
+	zend_bool upload_perdir;
+	zend_bool sql_perdir;
+	zend_bool misc_perdir;
+
+	/*	log */
+	zend_bool log_use_x_forwarded_for;
+	long	log_syslog;
+	long	log_syslog_facility;
+	long	log_syslog_priority;
+	long	log_script;
+	long	log_sapi;
+	long	log_stdout;
+	char	*log_scriptname;
+	long	log_phpscript;
+	char	*log_phpscriptname;
+	zend_bool log_phpscript_is_safe;
+	long	log_file;
+	char	*log_filename;
+	zend_bool log_file_time;
+
+	/*	header handler */
+	zend_bool allow_multiheader;
+
+	/*	mailprotect */
+	long	mailprotect;
+
+	/*  sqlprotect */
+	zend_bool sql_bailout_on_error;
+	char *sql_user_prefix;
+	char *sql_user_postfix;
+	char *sql_user_match;
+	long sql_comment;
+	long sql_opencomment;
+	long sql_union;
+	long sql_mselect;
+	
+	int (*old_php_body_write)(const char *str, unsigned int str_length TSRMLS_DC);
+
 ZEND_END_MODULE_GLOBALS(suhosin7)
 
 /* Always refer to the globals in your function as SUHOSIN7_G(variable).
@@ -140,6 +326,10 @@ ZEND_END_MODULE_GLOBALS(suhosin7)
    examples in any other php module directory.
 */
 #define SUHOSIN7_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(suhosin7, v)
+
+#ifdef SUHOSIN_DEBUG
+#define SUHOSIN_G(v) SUHOSIN7_G(v)
+#endif
 
 #if defined(ZTS) && defined(COMPILE_DL_SUHOSIN7)
 ZEND_TSRMLS_CACHE_EXTERN();

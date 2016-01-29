@@ -3,7 +3,7 @@
   | Suhosin Version 1                                                    |
   +----------------------------------------------------------------------+
   | Copyright (c) 2006-2007 The Hardened-PHP Project                     |
-  | Copyright (c) 2007-2015 SektionEins GmbH                             |
+  | Copyright (c) 2007-2016 SektionEins GmbH                             |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -13,7 +13,7 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Stefan Esser <sesser@sektioneins.de>                         |
+  | Author: Stefan Esser <sesser@sektioneins.de> and others              |
   +----------------------------------------------------------------------+
 */
 /*
@@ -79,7 +79,7 @@ void suhosin_hook_memory_limit()
 	zend_ini_entry *ini_entry;
 
 	/* check if we are compiled against memory_limit */
-	if ((ini_entry=zend_hash_str_find_ptr(EG(ini_directives), "memory_limit", sizeof("memory_limit")-1))) {
+	if ((ini_entry=zend_hash_str_find_ptr(EG(ini_directives), ZEND_STRL("memory_limit")))) {
 		/* replace OnUpdateMemoryLimit handler */
 		ini_entry->on_modify = suhosin_OnChangeMemoryLimit;
 	}
@@ -95,4 +95,3 @@ void suhosin_hook_memory_limit()
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
  */
-
