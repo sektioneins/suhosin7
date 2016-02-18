@@ -39,7 +39,7 @@ ZEND_DECLARE_MODULE_GLOBALS(suhosin7)
 /* ------------------------------------------------------------------------ */
 /* PERDIR CHECKS */
 #define PERDIR_CHECK(lower) \
-	if (!SUHOSIN_G(lower ## _perdir) && stage == ZEND_INI_STAGE_HTACCESS) { \
+	if (!SUHOSIN7_G(lower ## _perdir) && stage == ZEND_INI_STAGE_HTACCESS) { \
 		return FAILURE; \
 	} 
 
@@ -87,27 +87,27 @@ static ZEND_INI_MH(OnUpdateSuhosin_perdir)
 {
 	char *tmp;
 
-	if (SUHOSIN_G(perdir)) {
-		pefree(SUHOSIN_G(perdir), 1);
+	if (SUHOSIN7_G(perdir)) {
+		pefree(SUHOSIN7_G(perdir), 1);
 	}
-	SUHOSIN_G(perdir) = NULL;
+	SUHOSIN7_G(perdir) = NULL;
 
 	/* Initialize the perdir flags */
-	SUHOSIN_G(log_perdir) = 0;
-	SUHOSIN_G(exec_perdir) = 0;
-	SUHOSIN_G(misc_perdir) = 0;
-	SUHOSIN_G(get_perdir) = 0;
-	SUHOSIN_G(post_perdir) = 0;
-	SUHOSIN_G(cookie_perdir) = 0;
-	SUHOSIN_G(request_perdir) = 0;
-	SUHOSIN_G(upload_perdir) = 0;
-	SUHOSIN_G(sql_perdir) = 0;
+	SUHOSIN7_G(log_perdir) = 0;
+	SUHOSIN7_G(exec_perdir) = 0;
+	SUHOSIN7_G(misc_perdir) = 0;
+	SUHOSIN7_G(get_perdir) = 0;
+	SUHOSIN7_G(post_perdir) = 0;
+	SUHOSIN7_G(cookie_perdir) = 0;
+	SUHOSIN7_G(request_perdir) = 0;
+	SUHOSIN7_G(upload_perdir) = 0;
+	SUHOSIN7_G(sql_perdir) = 0;
 
 	if (new_value == NULL) {
 		return SUCCESS;
 	}
 	
-	tmp = SUHOSIN_G(perdir) = pestrdup(ZSTR_VAL(new_value), 1);
+	tmp = SUHOSIN7_G(perdir) = pestrdup(ZSTR_VAL(new_value), 1);
 
 	/* trim the whitespace */
 	while (isspace(*tmp)) tmp++;
@@ -195,7 +195,7 @@ list_destroy:
 static ZEND_INI_MH(OnUpdateSuhosin_ ## name) \
 { \
 	EXEC_PERDIR_CHECK(); \
-	parse_list(&SUHOSIN_G(name), ZSTR_VAL(new_value), 1); \
+	parse_list(&SUHOSIN7_G(name), ZSTR_VAL(new_value), 1); \
 	return SUCCESS; \
 }
 S7_INI_MH_EXECLIST(include_whitelist)
@@ -208,14 +208,14 @@ S7_INI_MH_EXECLIST(func_blacklist)
 static ZEND_INI_MH(OnUpdateSuhosin_cookie_cryptlist)
 {
 	COOKIE_PERDIR_CHECK();
-	parse_list(&SUHOSIN_G(cookie_cryptlist), ZSTR_VAL(new_value), 0);
+	parse_list(&SUHOSIN7_G(cookie_cryptlist), ZSTR_VAL(new_value), 0);
 	return SUCCESS;
 }
 
 static ZEND_INI_MH(OnUpdateSuhosin_cookie_plainlist)
 {
 	COOKIE_PERDIR_CHECK();
-	parse_list(&SUHOSIN_G(cookie_plainlist), ZSTR_VAL(new_value), 0);
+	parse_list(&SUHOSIN7_G(cookie_plainlist), ZSTR_VAL(new_value), 0);
 	return SUCCESS;
 }
 

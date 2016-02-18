@@ -123,21 +123,21 @@ protected_varname:
 
 
 ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
-	zend_long  global_value;
-	char *global_string;
+	// zend_long  global_value;
+	// char *global_string;
 	zend_bool	protectkey;
-
+	
 	zend_bool	simulation;
-	zend_bool stealth;
+	// zend_bool stealth;
 	zend_bool	already_scanned;
 	zend_bool	abort_request;
-	char *filter_action;
-
-	
-	zend_bool executor_allow_symlink;
-	long max_execution_depth;
-	long executor_include_max_traversal;
-	zend_bool executor_include_allow_writable_files;
+	// char *filter_action;
+	// 
+	// 
+	// zend_bool executor_allow_symlink;
+	// long max_execution_depth;
+	// long executor_include_max_traversal;
+	// zend_bool executor_include_allow_writable_files;
 
 
 	HashTable *include_whitelist;
@@ -148,8 +148,8 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	HashTable *eval_whitelist;
 	HashTable *eval_blacklist;
 
-	zend_bool executor_disable_eval;
-	zend_bool executor_disable_emod;
+	// zend_bool executor_disable_eval;
+	// zend_bool executor_disable_emod;
 
 
 /*	request variables */
@@ -198,25 +198,26 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_long  max_post_array_index_length;
 	zend_bool  disallow_post_nul;
 	zend_bool  disallow_post_ws;
-
+	
 /*	fileupload */
-	zend_long  upload_limit;
-	zend_long  upload_max_newlines;
-	zend_long  num_uploads;
-	zend_bool  upload_disallow_elf;
-	zend_bool  upload_disallow_binary;
-	zend_bool  upload_remove_binary;
+	// zend_long  upload_limit;
+	// zend_long  upload_max_newlines;
+	// zend_long  num_uploads;
+	// zend_bool  upload_disallow_elf;
+	// zend_bool  upload_disallow_binary;
+	// zend_bool  upload_remove_binary;
 #ifdef SUHOSIN7_EXPERIMENTAL
-	zend_bool  upload_allow_utf8;
+	// zend_bool  upload_allow_utf8;
 #endif
-	char *upload_verification_script;
+	// char *upload_verification_script;
 
 	zend_bool  no_more_variables;
 	zend_bool  no_more_get_variables;
 	zend_bool  no_more_post_variables;
 	zend_bool  no_more_cookie_variables;
 	zend_bool  no_more_uploads;
-	
+
+	/* encryption */
 	BYTE fi[24],ri[24];
 	WORD fkey[120];
 	WORD rkey[120];
@@ -241,29 +242,31 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	HashTable *cookie_plainlist;
 	HashTable *cookie_cryptlist;
 
-	zend_bool	coredump;
-	zend_bool	apc_bug_workaround;
+	/* misc */
+	// zend_bool	coredump;
+	// zend_bool	apc_bug_workaround;
 	zend_bool       do_not_scan;
-
+	// 
 	zend_bool	server_encode;
 	zend_bool	server_strip;
+	// 
+	// zend_bool	disable_display_errors;
 
-	zend_bool	disable_display_errors;
-
-	php_uint32   r_state[625];
-	php_uint32   *r_next;
-	int          r_left;
-	zend_bool    srand_ignore;
-	zend_bool    mt_srand_ignore;
-	php_uint32   mt_state[625];
-	php_uint32   *mt_next;
-	int          mt_left;
-
-	char         *seedingkey;
-	zend_bool    reseed_every_request;
-
-	zend_bool r_is_seeded; 
-	zend_bool mt_is_seeded;
+	/* random number generator */
+	// php_uint32   r_state[625];
+	// php_uint32   *r_next;
+	// int          r_left;
+	// zend_bool    srand_ignore;
+	// zend_bool    mt_srand_ignore;
+	// php_uint32   mt_state[625];
+	// php_uint32   *mt_next;
+	// int          mt_left;
+	// 
+	// char         *seedingkey;
+	// zend_bool    reseed_every_request;
+	// 
+	// zend_bool r_is_seeded; 
+	// zend_bool mt_is_seeded;
 
 
 /*	memory_limit */
@@ -286,38 +289,38 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool misc_perdir;
 
 	/*	log */
-	zend_bool log_use_x_forwarded_for;
-	long	log_syslog;
-	long	log_syslog_facility;
-	long	log_syslog_priority;
-	long	log_script;
-	long	log_sapi;
-	long	log_stdout;
-	char	*log_scriptname;
-	long	log_phpscript;
-	char	*log_phpscriptname;
-	zend_bool log_phpscript_is_safe;
-	long	log_file;
-	char	*log_filename;
-	zend_bool log_file_time;
+	// zend_bool log_use_x_forwarded_for;
+	// long	log_syslog;
+	// long	log_syslog_facility;
+	// long	log_syslog_priority;
+	// long	log_script;
+	// long	log_sapi;
+	// long	log_stdout;
+	// char	*log_scriptname;
+	// long	log_phpscript;
+	// char	*log_phpscriptname;
+	// zend_bool log_phpscript_is_safe;
+	// long	log_file;
+	// char	*log_filename;
+	// zend_bool log_file_time;
 
 	/*	header handler */
-	zend_bool allow_multiheader;
+	// zend_bool allow_multiheader;
 
 	/*	mailprotect */
-	long	mailprotect;
+	// long	mailprotect;
 
 	/*  sqlprotect */
-	zend_bool sql_bailout_on_error;
-	char *sql_user_prefix;
-	char *sql_user_postfix;
-	char *sql_user_match;
-	long sql_comment;
-	long sql_opencomment;
-	long sql_union;
-	long sql_mselect;
+	// zend_bool sql_bailout_on_error;
+	// char *sql_user_prefix;
+	// char *sql_user_postfix;
+	// char *sql_user_match;
+	// long sql_comment;
+	// long sql_opencomment;
+	// long sql_union;
+	// long sql_mselect;
 	
-	int (*old_php_body_write)(const char *str, unsigned int str_length TSRMLS_DC);
+	// int (*old_php_body_write)(const char *str, unsigned int str_length TSRMLS_DC);
 
 ZEND_END_MODULE_GLOBALS(suhosin7)
 
@@ -326,10 +329,6 @@ ZEND_END_MODULE_GLOBALS(suhosin7)
    examples in any other php module directory.
 */
 #define SUHOSIN7_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(suhosin7, v)
-
-#ifdef SUHOSIN7_DEBUG
-#define SUHOSIN_G(v) SUHOSIN7_G(v)
-#endif
 
 #if defined(ZTS) && defined(COMPILE_DL_SUHOSIN7)
 ZEND_TSRMLS_CACHE_EXTERN();
