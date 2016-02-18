@@ -221,6 +221,28 @@ static ZEND_INI_MH(OnUpdateSuhosin_cookie_plainlist)
 
 /* ------------------------------------------------------------------------ */
 
+#define DEF_LOG_UPDATER(fname, varname, inistr) static ZEND_INI_MH(fname) \
+{ \
+	LOG_PERDIR_CHECK() \
+	if (!new_value) { \
+		SUHOSIN7_G(varname) = S_ALL & ~S_MEMORY; \
+	} else { \
+		if (is_numeric_string(ZSTR_VAL(new_value), ZSTR_LEN(new_value), NULL, NULL, 0) != IS_LONG) { \
+			SUHOSIN7_G(varname) = S_ALL & ~S_MEMORY; \
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "unknown constant in %s=%s", inistr, new_value); \
+			return FAILURE; \
+		} \
+		SUHOSIN7_G(varname) = zend_atoi(ZSTR_VAL(new_value), ZSTR_LEN(new_value)) & (~S_MEMORY) & (~S_INTERNAL); \
+	} \
+	return SUCCESS; \
+}
+
+DEF_LOG_UPDATER(OnUpdateSuhosin_log_file, log_file, "suhosin.log.file")
+DEF_LOG_UPDATER(OnUpdateSuhosin_log_sapi, log_sapi, "suhosin.log.sapi")
+DEF_LOG_UPDATER(OnUpdateSuhosin_log_stdout, log_stdout, "suhosin.log.stdout")
+
+/* ------------------------------------------------------------------------ */
+
 #define STD_S7_INI_ENTRY(name, default_value, modifiable, on_modify, property_name) \
 	STD_PHP_INI_ENTRY(name, default_value, modifiable, on_modify, property_name, zend_suhosin7_globals, suhosin7_globals)
 #define STD_S7_INI_BOOLEAN(name, default_value, modifiable, on_modify, property_name) \
@@ -239,16 +261,16 @@ PHP_INI_BEGIN()
 	// PHP_INI_ENTRY("suhosin.log.syslog",				NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_syslog)
 	// PHP_INI_ENTRY("suhosin.log.syslog.facility",	NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_syslog_facility)
 	// PHP_INI_ENTRY("suhosin.log.syslog.priority",	NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_syslog_priority)
-	// PHP_INI_ENTRY("suhosin.log.sapi",				"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_sapi)
-	// PHP_INI_ENTRY("suhosin.log.stdout",				"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_stdout)
+	PHP_INI_ENTRY("suhosin.log.sapi",				"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_sapi)
+	PHP_INI_ENTRY("suhosin.log.stdout",				"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_stdout)
 	// PHP_INI_ENTRY("suhosin.log.script",				"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_script)
 	// PHP_INI_ENTRY("suhosin.log.script.name",		NULL,		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_scriptname)
-	// STD_S7_INI_BOOLEAN("suhosin.log.use-x-forwarded-for",	"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateLogBool, log_use_x_forwarded_for)
+	STD_S7_INI_BOOLEAN("suhosin.log.use-x-forwarded-for",	"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateLogBool, log_use_x_forwarded_for)
 	// PHP_INI_ENTRY("suhosin.log.phpscript",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_phpscript)
 	// STD_S7_INI_ENTRY("suhosin.log.phpscript.name",	NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateLogString, log_phpscriptname)
-	// PHP_INI_ENTRY("suhosin.log.file",				"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_file)
-	// STD_S7_INI_ENTRY("suhosin.log.file.name",		NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateLogString, log_filename)
-	// STD_S7_INI_BOOLEAN("suhosin.log.file.time",		"1",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateLogBool, log_file_time)
+	PHP_INI_ENTRY("suhosin.log.file",				"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_file)
+	STD_S7_INI_ENTRY("suhosin.log.file.name",		NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateLogString, log_filename)
+	STD_S7_INI_BOOLEAN("suhosin.log.file.time",		"1",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateLogBool, log_file_time)
 	// STD_S7_INI_BOOLEAN("suhosin.log.phpscript.is_safe",	"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateLogBool, log_phpscript_is_safe)
 
 	// STD_S7_INI_ENTRY("suhosin.executor.include.max_traversal",		"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecLong, executor_include_max_traversal)
@@ -373,6 +395,33 @@ PHP_INI_BEGIN()
 
 
 PHP_INI_END()
+/* }}} */
+
+/* {{{ suhosin_getenv
+ */
+char *suhosin_getenv(char *name, size_t name_len)
+{
+	if (sapi_module.getenv) {
+		char *value, *tmp = sapi_module.getenv(name, name_len);
+		if (tmp) {
+			value = estrdup(tmp);
+		} else {
+			return NULL;
+		}
+		return value;
+	} else {
+		/* fallback to the system's getenv() function */
+		char *tmp;
+		
+		name = estrndup(name, name_len);
+		tmp = getenv(name);
+		efree(name);
+		if (tmp) {
+			return estrdup(tmp);
+		}
+	}
+	return NULL;
+}
 /* }}} */
 
 

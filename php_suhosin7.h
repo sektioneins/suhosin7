@@ -243,7 +243,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	HashTable *cookie_cryptlist;
 
 	/* misc */
-	// zend_bool	coredump;
+	zend_bool	coredump;
 	// zend_bool	apc_bug_workaround;
 	zend_bool       do_not_scan;
 	// 
@@ -289,20 +289,20 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool misc_perdir;
 
 	/*	log */
-	// zend_bool log_use_x_forwarded_for;
+	zend_bool log_use_x_forwarded_for;
 	// long	log_syslog;
 	// long	log_syslog_facility;
 	// long	log_syslog_priority;
 	// long	log_script;
-	// long	log_sapi;
-	// long	log_stdout;
+	long	log_sapi;
+	long	log_stdout;
 	// char	*log_scriptname;
 	// long	log_phpscript;
 	// char	*log_phpscriptname;
 	// zend_bool log_phpscript_is_safe;
-	// long	log_file;
-	// char	*log_filename;
-	// zend_bool log_file_time;
+	long	log_file;
+	char	*log_filename;
+	zend_bool log_file_time;
 
 	/*	header handler */
 	// zend_bool allow_multiheader;
@@ -361,10 +361,13 @@ ZEND_TSRMLS_CACHE_EXTERN();
 
 ZEND_EXTERN_MODULE_GLOBALS(suhosin7)
 
+/* functions */
+
 unsigned int suhosin_input_filter(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 unsigned int suhosin_input_filter_wrapper(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 void suhosin_log(int loglevel, char *fmt, ...);
 extern unsigned int (*old_input_filter)(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
+char *suhosin_getenv(char *name, size_t name_len);
 
 
 #endif	/* PHP_SUHOSIN7_H */
