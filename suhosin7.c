@@ -323,7 +323,7 @@ PHP_INI_BEGIN()
 	// STD_S7_INI_ENTRY("suhosin.upload.disallow_elf", "1", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateUploadBool, upload_disallow_elf)
 	// STD_S7_INI_ENTRY("suhosin.upload.disallow_binary", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateUploadBool, upload_disallow_binary)
 	// STD_S7_INI_ENTRY("suhosin.upload.remove_binary", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateUploadBool, upload_remove_binary)
-#ifdef SUHOSIN_EXPERIMENTAL
+#ifdef SUHOSIN7_EXPERIMENTAL
 	// STD_S7_INI_BOOLEAN("suhosin.upload.allow_utf8", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateUploadBool, upload_allow_utf8)
 #endif
 	// STD_S7_INI_ENTRY("suhosin.upload.verification_script", NULL, PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateUploadString, upload_verification_script)

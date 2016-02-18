@@ -50,7 +50,7 @@ extern zend_module_entry suhosin7_module_entry;
 #define SDEBUG
 #else
 
-#ifdef SUHOSIN_DEBUG
+#ifdef SUHOSIN7_DEBUG
 #define SDEBUG(msg...) \
 	{FILE *f;f=fopen(SUHOSIN_LOG, "a+");if(f){fprintf(f,"[%u] ",getpid());fprintf(f, msg);fprintf(f,"\n");fclose(f);}}
 #else
@@ -206,7 +206,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool  upload_disallow_elf;
 	zend_bool  upload_disallow_binary;
 	zend_bool  upload_remove_binary;
-#ifdef SUHOSIN_EXPERIMENTAL
+#ifdef SUHOSIN7_EXPERIMENTAL
 	zend_bool  upload_allow_utf8;
 #endif
 	char *upload_verification_script;
@@ -327,7 +327,7 @@ ZEND_END_MODULE_GLOBALS(suhosin7)
 */
 #define SUHOSIN7_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(suhosin7, v)
 
-#ifdef SUHOSIN_DEBUG
+#ifdef SUHOSIN7_DEBUG
 #define SUHOSIN_G(v) SUHOSIN7_G(v)
 #endif
 
