@@ -135,34 +135,34 @@ static ZEND_INI_MH(OnUpdateSuhosin_perdir)
 	return SUCCESS;
 }
 
-static void parse_list(HashTable **ht, char *list, zend_bool lc)
+static void parse_list(HashTable **ht, zend_string *zlist, zend_bool lc)
 {
-	char *s = NULL, *e, *val;
-	// unsigned long dummy = 1;
-	
-	if (list == NULL) {
+	if (zlist == NULL) {
 list_destroy:
 		if (*ht) {
 			zend_hash_destroy(*ht);
-			pefree(*ht, 1);
+			FREE_HASHTABLE(*ht);
 		}
 		*ht = NULL;
 		return;
 	}
-	while (*list == ' ' || *list == '\t') list++;
+
+	char *list = ZSTR_VAL(zlist);
+	while (*list && (*list == ' ' || *list == '\t')) list++;
 	if (*list == 0) {
 		goto list_destroy;
 	}
-	
+
 	*ht = pemalloc(sizeof(HashTable), 1);
 	zend_hash_init(*ht, 5, NULL, NULL, 1);
 	
-	val = estrndup(list, strlen(list));
+	char *val = estrndup(list, strlen(list));
 	if (lc) {
 		zend_str_tolower(val, strlen(list));
 	}
-	
-	e = val;
+
+	char *e = val;
+	char *s = NULL;
 	
 	while (*e) {
 		switch (*e) {
@@ -195,7 +195,7 @@ list_destroy:
 static ZEND_INI_MH(OnUpdateSuhosin_ ## name) \
 { \
 	EXEC_PERDIR_CHECK(); \
-	parse_list(&SUHOSIN7_G(name), ZSTR_VAL(new_value), 1); \
+	parse_list(&SUHOSIN7_G(name), new_value, 1); \
 	return SUCCESS; \
 }
 S7_INI_MH_EXECLIST(include_whitelist)
@@ -208,14 +208,14 @@ S7_INI_MH_EXECLIST(func_blacklist)
 static ZEND_INI_MH(OnUpdateSuhosin_cookie_cryptlist)
 {
 	COOKIE_PERDIR_CHECK();
-	parse_list(&SUHOSIN7_G(cookie_cryptlist), ZSTR_VAL(new_value), 0);
+	parse_list(&SUHOSIN7_G(cookie_cryptlist), new_value, 0);
 	return SUCCESS;
 }
 
 static ZEND_INI_MH(OnUpdateSuhosin_cookie_plainlist)
 {
 	COOKIE_PERDIR_CHECK();
-	parse_list(&SUHOSIN7_G(cookie_plainlist), ZSTR_VAL(new_value), 0);
+	parse_list(&SUHOSIN7_G(cookie_plainlist), new_value, 0);
 	return SUCCESS;
 }
 
