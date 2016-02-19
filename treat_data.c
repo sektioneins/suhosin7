@@ -41,7 +41,7 @@ SAPI_TREAT_DATA_FUNC(suhosin_treat_data)
 	zend_long count = 0;
 
 	/* Mark that we were not yet called */
-	SUHOSIN7_G(already_scanned) = 0;
+	// SUHOSIN7_G(already_scanned) = 0;
 
 	ZVAL_UNDEF(&array);
 	switch (arg) {

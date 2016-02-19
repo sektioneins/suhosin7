@@ -51,8 +51,10 @@ extern zend_module_entry suhosin7_module_entry;
 #else
 
 #ifdef SUHOSIN7_DEBUG
+// #define SDEBUG(msg...) \
+	// {FILE *f;f=fopen(SUHOSIN_LOG, "a+");if(f){fprintf(f,"[%u] ",getpid());fprintf(f, msg);fprintf(f,"\n");fclose(f);}}
 #define SDEBUG(msg...) \
-	{FILE *f;f=fopen(SUHOSIN_LOG, "a+");if(f){fprintf(f,"[%u] ",getpid());fprintf(f, msg);fprintf(f,"\n");fclose(f);}}
+	{FILE *f;f=fopen(SUHOSIN_LOG, "a+");if(f){fprintf(f,"[%u] %s:%u %s #> ",getpid(), __FILE__, __LINE__, __func__);fprintf(f, msg);fprintf(f,"\n");fclose(f);}}
 #else
 #define SDEBUG(msg...)
 #endif    
@@ -131,13 +133,16 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	// zend_bool stealth;
 	zend_bool	already_scanned;
 	zend_bool	abort_request;
-	// char *filter_action;
 	// 
-	// 
+	
+	/* executor */
+	zend_ulong in_code_type;
 	// zend_bool executor_allow_symlink;
-	// long max_execution_depth;
-	// long executor_include_max_traversal;
-	// zend_bool executor_include_allow_writable_files;
+	long execution_depth;
+	long max_execution_depth;
+	long executor_include_max_traversal;
+	zend_bool executor_include_allow_writable_files;
+	// char *filter_action;
 
 
 	HashTable *include_whitelist;
@@ -148,8 +153,8 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	HashTable *eval_whitelist;
 	HashTable *eval_blacklist;
 
-	// zend_bool executor_disable_eval;
-	// zend_bool executor_disable_emod;
+	zend_bool executor_disable_eval;
+	zend_bool executor_disable_emod;
 
 
 /*	request variables */
@@ -365,9 +370,21 @@ ZEND_EXTERN_MODULE_GLOBALS(suhosin7)
 
 unsigned int suhosin_input_filter(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 unsigned int suhosin_input_filter_wrapper(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
-void suhosin_log(int loglevel, char *fmt, ...);
+PHP_SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...);
 extern unsigned int (*old_input_filter)(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 char *suhosin_getenv(char *name, size_t name_len);
+
+void suhosin_hook_memory_limit();
+void suhosin_hook_treat_data();
+void suhosin_hook_execute();
+void suhosin_hook_register_server_variables();
+
+static inline void suhosin_bailout(TSRMLS_D)
+{
+	if (!SUHOSIN7_G(simulation)) {
+		zend_bailout();
+	}
+}
 
 
 #endif	/* PHP_SUHOSIN7_H */
