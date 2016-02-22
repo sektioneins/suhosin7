@@ -162,7 +162,6 @@ list_destroy:
 				if (s) {
 					*e = '\0';
 					zend_hash_str_add_empty_element(*ht, s, e-s);
-					// zend_hash_str_add(*ht, s, e-s, &dummy, sizeof(unsigned long), NULL);
 					s = NULL;
 				}
 				break;
@@ -175,7 +174,6 @@ list_destroy:
 		e++;
 	}
 	if (s) {
-		// zend_hash_str_add(*ht, s, e-s, &dummy, sizeof(unsigned long), NULL);
 		zend_hash_str_add_empty_element(*ht, s, e-s);
 	}
 	efree(val);
@@ -508,17 +506,15 @@ PHP_MINFO_FUNCTION(suhosin7)
 {
 	php_info_print_box_start(0);
 	if (!sapi_module.phpinfo_as_text) {
-		do {
-			zend_string *enc_logo;
-			
-			PUTS("<a href=\"http://www.suhosin.org/\"><img border=\"0\" src=\"data:image/jpeg;base64,");
-			enc_logo = php_base64_encode(suhosin_logo, sizeof(suhosin_logo));
-			if (ZSTR_LEN(enc_logo)) {
-				PHPWRITE(ZSTR_VAL(enc_logo), ZSTR_LEN(enc_logo));
-			}
-			zend_string_free(enc_logo);
-			PUTS("\" alt=\"Suhosin logo\" /></a>\n");
-		} while(0);
+		zend_string *enc_logo;
+		
+		PUTS("<a href=\"http://www.suhosin.org/\"><img border=\"0\" src=\"data:image/jpeg;base64,");
+		enc_logo = php_base64_encode(suhosin_logo, sizeof(suhosin_logo));
+		if (ZSTR_LEN(enc_logo)) {
+			PHPWRITE(ZSTR_VAL(enc_logo), ZSTR_LEN(enc_logo));
+		}
+		zend_string_free(enc_logo);
+		PUTS("\" alt=\"Suhosin logo\" /></a>\n");
 	}
 	PUTS("This server is protected with the Suhosin Extension " SUHOSIN7_EXT_VERSION);
 	PUTS(!sapi_module.phpinfo_as_text?"<br /><br />":"\n\n");
