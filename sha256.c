@@ -395,7 +395,7 @@ void suhosin_hook_sha256()
 {
 	/* check if we already have sha256 support */
 	if (zend_hash_str_find(CG(function_table), ZEND_STRL("sha256"))) {
-		return;		
+		return;
 	}
 	
 	/* add the sha256 functions */
