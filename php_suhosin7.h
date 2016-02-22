@@ -279,7 +279,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 
 
 	/* PERDIR Handling */
-	char *perdir;
+	// char *perdir;
 	zend_bool log_perdir;
 	zend_bool exec_perdir;
 	zend_bool get_perdir;

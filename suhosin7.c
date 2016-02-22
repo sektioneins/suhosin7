@@ -77,21 +77,14 @@ dohandlers(SQL, sql)
 
 
 /* ------------------------------------------------------------------------ */
-#define PERDIR_CASE(l, U, name) \
+#define PERDIR_CASE(l, name) \
 	case l: \
-	case U: \
+	case l-0x20: \
 		SUHOSIN7_G(name ## _perdir) = 1; \
 		break;
 
 static ZEND_INI_MH(OnUpdateSuhosin_perdir)
 {
-	char *tmp;
-
-	if (SUHOSIN7_G(perdir)) {
-		pefree(SUHOSIN7_G(perdir), 1);
-	}
-	SUHOSIN7_G(perdir) = NULL;
-
 	/* Initialize the perdir flags */
 	SUHOSIN7_G(log_perdir) = 0;
 	SUHOSIN7_G(exec_perdir) = 0;
@@ -103,35 +96,33 @@ static ZEND_INI_MH(OnUpdateSuhosin_perdir)
 	SUHOSIN7_G(upload_perdir) = 0;
 	SUHOSIN7_G(sql_perdir) = 0;
 
-	if (new_value == NULL) {
+	if (new_value == NULL || ZSTR_LEN(new_value) == 0) {
 		return SUCCESS;
 	}
 	
-	tmp = SUHOSIN7_G(perdir) = pestrdup(ZSTR_VAL(new_value), 1);
-
-	/* trim the whitespace */
-	while (isspace(*tmp)) tmp++;
-
+	char *tmp = ZSTR_VAL(new_value);
+	
 	/* should we deactivate perdir completely? */
-	if (*tmp == 0 || *tmp == '0') {
+	if (*tmp == '0') {
 		return SUCCESS;
 	}
 
 	/* no deactivation so check the flags */
-	while (*tmp) {
+	for (; tmp < ZSTR_VAL(new_value) + ZSTR_LEN(new_value) && *tmp; tmp++) {
+		if (isspace(*tmp))
+			continue;
 		switch (*tmp) {
-			PERDIR_CASE('l', 'L', log)
-			PERDIR_CASE('e', 'E', exec)
-			PERDIR_CASE('g', 'G', get)
-			PERDIR_CASE('c', 'C', cookie)
-			PERDIR_CASE('p', 'P', post)
-			PERDIR_CASE('r', 'R', request)
-			PERDIR_CASE('s', 'S', sql)
-			PERDIR_CASE('u', 'U', upload)
-			PERDIR_CASE('m', 'M', misc)
+			PERDIR_CASE('l', log)
+			PERDIR_CASE('e', exec)
+			PERDIR_CASE('g', get)
+			PERDIR_CASE('c', cookie)
+			PERDIR_CASE('p', post)
+			PERDIR_CASE('r', request)
+			PERDIR_CASE('s', sql)
+			PERDIR_CASE('u', upload)
+			PERDIR_CASE('m', misc)
 		}
-		tmp++;
-	}        
+	}
 	return SUCCESS;
 }
 
@@ -148,8 +139,8 @@ list_destroy:
 	}
 
 	char *list = ZSTR_VAL(zlist);
-	while (*list && (*list == ' ' || *list == '\t')) list++;
-	if (*list == 0) {
+	while (list < ZSTR_VAL(zlist) + ZSTR_LEN(zlist) && *list && (*list == ' ' || *list == '\t')) list++;
+	if (*list == 0 || list >= ZSTR_VAL(zlist) + ZSTR_LEN(zlist)) {
 		goto list_destroy;
 	}
 
