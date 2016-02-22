@@ -59,31 +59,31 @@ static HANDLE log_source = 0;
 #endif
 
 
-static char *loglevel2string(int loglevel)
-{
-	switch (loglevel) {
-	    case S_FILES:
-		return "FILES";
-	    case S_INCLUDE:
-		return "INCLUDE";
-	    case S_MEMORY:
-		return "MEMORY";
-	    case S_MISC:
-		return "MISC";
-	    case S_MAIL:
-		return "MAIL";
-		case S_SESSION:
-		return "SESSION";
-	    case S_SQL:
-		return "SQL";
-	    case S_EXECUTOR:
-		return "EXECUTOR";
-	    case S_VARS:
-		return "VARS";
-	    default:
-		return "UNKNOWN";    
-	}
-}
+// static inline char *loglevel2string(int loglevel)
+// {
+// 	switch (loglevel) {
+// 	    case S_FILES:
+// 		return "FILES";
+// 	    case S_INCLUDE:
+// 		return "INCLUDE";
+// 	    case S_MEMORY:
+// 		return "MEMORY";
+// 	    case S_MISC:
+// 		return "MISC";
+// 	    case S_MAIL:
+// 		return "MAIL";
+// 		case S_SESSION:
+// 		return "SESSION";
+// 	    case S_SQL:
+// 		return "SQL";
+// 	    case S_EXECUTOR:
+// 		return "EXECUTOR";
+// 	    case S_VARS:
+// 		return "VARS";
+// 	    default:
+// 		return "UNKNOWN";    
+// 	}
+// }
 
 static char *month_names[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
