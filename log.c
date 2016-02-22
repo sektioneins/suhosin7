@@ -90,7 +90,7 @@ static char *month_names[] = {
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
-PHP_SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...)
+SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...)
 {
 	int s, r, i=0, fd;
 	long written, towrite;

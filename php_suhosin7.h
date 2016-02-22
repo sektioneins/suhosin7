@@ -31,11 +31,11 @@ extern zend_module_entry suhosin7_module_entry;
 #endif
 
 #ifdef PHP_WIN32
-#	define PHP_SUHOSIN7_API __declspec(dllexport)
+#	define SUHOSIN7_API __declspec(dllexport)
 #elif defined(__GNUC__) && __GNUC__ >= 4
-#	define PHP_SUHOSIN7_API __attribute__ ((visibility("default")))
+#	define SUHOSIN7_API __attribute__ ((visibility("default")))
 #else
-#	define PHP_SUHOSIN7_API
+#	define SUHOSIN7_API
 #endif
 
 
@@ -364,7 +364,7 @@ ZEND_EXTERN_MODULE_GLOBALS(suhosin7)
 
 unsigned int suhosin_input_filter(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 unsigned int suhosin_input_filter_wrapper(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
-PHP_SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...);
+SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...);
 extern unsigned int (*old_input_filter)(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 char *suhosin_getenv(char *name, size_t name_len);
 
