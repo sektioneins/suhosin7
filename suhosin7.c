@@ -493,7 +493,6 @@ PHP_MINIT_FUNCTION(suhosin7)
 		if ((i = zend_hash_find_ptr(EG(ini_directives), ini_name))) {
 			if (i->on_modify) {
 				i->on_modify(i, val0, i->mh_arg1, i->mh_arg2, i->mh_arg3, ZEND_INI_STAGE_STARTUP);
-				// i->on_modify = NULL;
 			}
 			
 			SDEBUG("display_errors=%s", ZSTR_VAL(val0));
