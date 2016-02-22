@@ -208,7 +208,41 @@ static ZEND_INI_MH(OnUpdateSuhosin_cookie_plainlist)
 	return SUCCESS;
 }
 
+static ZEND_INI_MH(OnUpdate_disable_display_errors) /* {{{ */
+{
+	zend_bool *p, val;
+#ifndef ZTS
+	char *base = (char *) mh_arg2;
+#else
+	char *base;
+
+	base = (char *) ts_resource(*((int *) mh_arg2));
+#endif
+
+	p = (zend_bool *) (base+(size_t) mh_arg1);
+
+	if (zend_string_equals_literal_ci(new_value, "on") ||
+		zend_string_equals_literal_ci(new_value, "yes") ||
+		zend_string_equals_literal_ci(new_value, "true")) {
+		*p = (zend_bool) 1;
+	} else if (zend_string_equals_literal_ci(new_value, "fail")) {
+		*p = (zend_bool) 2;
+	}
+	else {
+		*p = (zend_bool) zend_atoi(ZSTR_VAL(new_value), ZSTR_LEN(new_value));
+	}
+
+	return SUCCESS;
+}
+/* }}} */
+
+static ZEND_INI_MH(OnUpdate_fail)
+{
+	return FAILURE;
+}
+
 /* ------------------------------------------------------------------------ */
+
 
 #define DEF_LOG_UPDATER(fname, varname, inistr) static ZEND_INI_MH(fname) \
 { \
@@ -287,7 +321,7 @@ PHP_INI_BEGIN()
 	// STD_S7_INI_BOOLEAN("suhosin.coredump",				"0",	PHP_INI_SYSTEM,	OnUpdateBool, coredump)
 	// STD_S7_INI_BOOLEAN("suhosin.stealth",				"1",	PHP_INI_SYSTEM,	OnUpdateBool, stealth)
 	// STD_S7_INI_BOOLEAN("suhosin.apc_bug_workaround",	"0",	PHP_INI_SYSTEM,	OnUpdateBool, apc_bug_workaround)
-	// STD_S7_INI_BOOLEAN("suhosin.disable.display_errors",	"0",	PHP_INI_SYSTEM,	OnUpdate_disable_display_errors, disable_display_errors)
+	STD_S7_INI_BOOLEAN("suhosin.disable.display_errors",	"0",	PHP_INI_SYSTEM,	OnUpdate_disable_display_errors, disable_display_errors)
 	
 	
 	// 
@@ -450,7 +484,34 @@ PHP_MINIT_FUNCTION(suhosin7)
 #endif
 
 	// TODO: stealth loading
-	
+
+	/* Force display_errors=off */
+	if (SUHOSIN7_G(disable_display_errors)) {
+		zend_ini_entry *i;
+		zend_string *ini_name = zend_string_init(ZEND_STRL("display_errors"), 0);
+		zend_string *val0 = zend_string_init(ZEND_STRL("0"), 1);
+		if ((i = zend_hash_find_ptr(EG(ini_directives), ini_name))) {
+			if (i->on_modify) {
+				i->on_modify(i, val0, i->mh_arg1, i->mh_arg2, i->mh_arg3, ZEND_INI_STAGE_STARTUP);
+				// i->on_modify = NULL;
+			}
+			
+			SDEBUG("display_errors=%s", ZSTR_VAL(val0));
+			if (SUHOSIN7_G(disable_display_errors) >= 2) {
+				i->modified = 0;
+				i->value = zend_string_copy(val0);
+				i->on_modify = OnUpdate_fail;
+			} else {
+				i->on_modify = NULL;
+			}
+		} else {
+			// no display_errors?
+			suhosin_log(S_INTERNAL, "suhosin cannot protect display_errors: option not found");
+		}
+		zend_string_release(ini_name);
+		zend_string_release(val0);
+	}
+
 	// hooks
 	// suhosin_hook_memory_limit();
 	suhosin_hook_treat_data();

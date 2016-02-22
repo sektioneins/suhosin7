@@ -252,7 +252,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool	server_encode;
 	zend_bool	server_strip;
 	// 
-	// zend_bool	disable_display_errors;
+	zend_bool	disable_display_errors;
 
 	/* random number generator */
 	// php_uint32   r_state[625];
