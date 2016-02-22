@@ -38,9 +38,6 @@ extern zend_module_entry suhosin7_module_entry;
 #	define PHP_SUHOSIN7_API
 #endif
 
-#ifdef ZTS
-#include "TSRM.h"
-#endif
 
 /* -------------- */
 
@@ -325,7 +322,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	// long sql_union;
 	// long sql_mselect;
 	
-	// int (*old_php_body_write)(const char *str, unsigned int str_length TSRMLS_DC);
+	// int (*old_php_body_write)(const char *str, unsigned int str_length);
 
 ZEND_END_MODULE_GLOBALS(suhosin7)
 
@@ -335,9 +332,6 @@ ZEND_END_MODULE_GLOBALS(suhosin7)
 */
 #define SUHOSIN7_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(suhosin7, v)
 
-#if defined(ZTS) && defined(COMPILE_DL_SUHOSIN7)
-ZEND_TSRMLS_CACHE_EXTERN();
-#endif
 
 /* Error Constants */
 #ifndef S_MEMORY
@@ -379,7 +373,7 @@ void suhosin_hook_treat_data();
 void suhosin_hook_execute();
 void suhosin_hook_register_server_variables();
 
-static inline void suhosin_bailout(TSRMLS_D)
+static inline void suhosin_bailout()
 {
 	if (!SUHOSIN7_G(simulation)) {
 		zend_bailout();

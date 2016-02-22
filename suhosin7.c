@@ -229,7 +229,7 @@ static ZEND_INI_MH(OnUpdateSuhosin_cookie_plainlist)
 	} else { \
 		if (is_numeric_string(ZSTR_VAL(new_value), ZSTR_LEN(new_value), NULL, NULL, 0) != IS_LONG) { \
 			SUHOSIN7_G(varname) = S_ALL & ~S_MEMORY; \
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "unknown constant in %s=%s", inistr, new_value); \
+			php_error_docref(NULL, E_WARNING, "unknown constant in %s=%s", inistr, new_value); \
 			return FAILURE; \
 		} \
 		SUHOSIN7_G(varname) = zend_atoi(ZSTR_VAL(new_value), ZSTR_LEN(new_value)) & (~S_MEMORY) & (~S_INTERNAL); \
@@ -457,7 +457,7 @@ PHP_MINIT_FUNCTION(suhosin7)
 	REGISTER_INI_ENTRIES();
 	
 #if !defined(HAVE_PHP_SESSION) && !defined(SUHOSIN_NO_SESSION_WARNING)
-	php_error_docref(NULL TSRMLS_CC, E_WARNING, "Suhosin was compiled without session support, which is probably not what you want. All session related features will not be available, e.g. session encryption. If session support is really not needed, recompile Suhosin with -DSUHOSIN_NO_SESSION_WARNING=1 to suppress this warning.");
+	php_error_docref(NULL, E_WARNING, "Suhosin was compiled without session support, which is probably not what you want. All session related features will not be available, e.g. session encryption. If session support is really not needed, recompile Suhosin with -DSUHOSIN_NO_SESSION_WARNING=1 to suppress this warning.");
 #endif
 
 	// TODO: stealth loading
@@ -488,9 +488,6 @@ PHP_MSHUTDOWN_FUNCTION(suhosin7)
 PHP_RINIT_FUNCTION(suhosin7)
 {
 	SDEBUG("(RINIT)");
-#if defined(COMPILE_DL_SUHOSIN7) && defined(ZTS)
-	ZEND_TSRMLS_CACHE_UPDATE();
-#endif
 	return SUCCESS;
 }
 /* }}} */

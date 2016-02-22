@@ -8,6 +8,6 @@
 // ARG_ENABLE("suhosin7", "enable suhosin7 support", "no");
 
 if (PHP_SUHOSIN7 != "no") {
-	EXTENSION("suhosin7", "suhosin7.c", PHP_EXTNAME_SHARED, "/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+	EXTENSION("suhosin7", "suhosin7.c", PHP_EXTNAME_SHARED, "/DZEND_ENABLE_STATIC_ACHE=1");
 }
 

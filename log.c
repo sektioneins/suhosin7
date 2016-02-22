@@ -114,7 +114,6 @@ PHP_SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...)
 	char *alertstring;
 	int lineno = 0;
 	va_list ap;
-	// TSRMLS_FETCH();
 
 	getcaller = (loglevel & S_GETCALLER) == S_GETCALLER;
 
@@ -157,7 +156,7 @@ PHP_SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...)
 		alertstring = "ALERT";
 	}
 	
-	if (zend_is_executing(TSRMLS_C)) {
+	if (zend_is_executing()) {
 		zend_execute_data *exdata = EG(current_execute_data);
 		if (exdata) {
 			if (getcaller && exdata->prev_execute_data && exdata->prev_execute_data->opline && exdata->prev_execute_data->func) {
@@ -171,8 +170,8 @@ PHP_SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...)
 				fname = "[unknown filename]";
 			}
 		} else {
-			lineno = zend_get_executed_lineno(TSRMLS_C);
-			fname = (char *)zend_get_executed_filename(TSRMLS_C);
+			lineno = zend_get_executed_lineno();
+			fname = (char *)zend_get_executed_filename();
 		}
 		ap_php_snprintf(buf, sizeof(buf), "%s - %s (attacker '%s', file '%s', line %u)", alertstring, error, ip_address, fname, lineno);
 	} else {
@@ -287,7 +286,7 @@ log_sapi:
 	/* SAPI Logging activated? */
 	// SDEBUG("(suhosin_log) log_syslog: %ld - log_sapi: %ld - log_script: %ld - log_phpscript: %ld", SUHOSIN7_G(log_syslog), SUHOSIN7_G(log_sapi), SUHOSIN7_G(log_script), SUHOSIN7_G(log_phpscript));
 	if (sapi_module.log_message && ((SUHOSIN7_G(log_sapi)|S_INTERNAL) & loglevel)!=0) {
-		sapi_module.log_message(buf TSRMLS_CC);
+		sapi_module.log_message(buf);
 	}
 	if ((SUHOSIN7_G(log_stdout) & loglevel)!=0) {
 		fprintf(stdout, "%s\n", buf);
@@ -372,12 +371,12 @@ log_sapi:
 // 		
 // 		char *phpscript = SUHOSIN7_G(log_phpscriptname);
 // 		SDEBUG("scriptname %s", SUHOSIN7_G(log_phpscriptname));
-// 		if (zend_stream_open(phpscript, &file_handle TSRMLS_CC) == SUCCESS) {
+// 		if (zend_stream_open(phpscript, &file_handle) == SUCCESS) {
 // 			if (!file_handle.opened_path) {
 // 				file_handle.opened_path = estrndup(phpscript, strlen(phpscript));
 // 			}
-// 			new_op_array = zend_compile_file(&file_handle, ZEND_REQUIRE TSRMLS_CC);
-// 			zend_destroy_file_handle(&file_handle TSRMLS_CC);
+// 			new_op_array = zend_compile_file(&file_handle, ZEND_REQUIRE);
+// 			zend_destroy_file_handle(&file_handle);
 // 			if (new_op_array) {
 // 				HashTable *active_symbol_table = EG(active_symbol_table);
 // 				zval *zerror, *zerror_class;
@@ -401,12 +400,12 @@ log_sapi:
 // 					PG(open_basedir) = NULL;
 // 				}
 // 				
-// 				zend_execute(new_op_array TSRMLS_CC);
+// 				zend_execute(new_op_array);
 // 				
 // 				SUHOSIN7_G(execution_depth) = orig_execution_depth;
 // 				PG(open_basedir) = orig_basedir;
 // 				
-// 				destroy_op_array(new_op_array TSRMLS_CC);
+// 				destroy_op_array(new_op_array);
 // 				efree(new_op_array);
 // 
 // 				if (!EG(exception))

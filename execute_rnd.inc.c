@@ -134,7 +134,7 @@ static inline void suhosin_mt_reload(php_uint32 *state, php_uint32 **next, int *
 
 /* {{{ suhosin_mt_srand
  */
-static void suhosin_mt_srand(php_uint32 seed TSRMLS_DC)
+static void suhosin_mt_srand(php_uint32 seed)
 {
 	/* Seed the generator with a simple uint32 */
 	suhosin_mt_initialize(seed, SUHOSIN7_G(mt_state));
@@ -147,7 +147,7 @@ static void suhosin_mt_srand(php_uint32 seed TSRMLS_DC)
 
 /* {{{ suhosin_mt_rand
  */
-static php_uint32 suhosin_mt_rand(TSRMLS_D)
+static php_uint32 suhosin_mt_rand()
 {
 	/* Pull a 32-bit integer from the generator state
 	   Every other access function simply transforms the numbers extracted here */
@@ -169,7 +169,7 @@ static php_uint32 suhosin_mt_rand(TSRMLS_D)
 
 /* {{{ SUHOSIN7_Gen_entropy
  */
-static void SUHOSIN7_Gen_entropy(php_uint32 *entropybuf TSRMLS_DC)
+static void SUHOSIN7_Gen_entropy(php_uint32 *entropybuf)
 {
     php_uint32 seedbuf[20];
     /* On a modern OS code, stack and heap base are randomized */
@@ -192,7 +192,7 @@ static void SUHOSIN7_Gen_entropy(php_uint32 *entropybuf TSRMLS_DC)
 #else
     seedbuf[4] = getpid();
 #endif
-    seedbuf[5] = (php_uint32) 0x7fffffff * php_combined_lcg(TSRMLS_C);
+    seedbuf[5] = (php_uint32) 0x7fffffff * php_combined_lcg();
 
 #ifndef PHP_WIN32
     fd = VCWD_OPEN("/dev/urandom", O_RDONLY);
@@ -219,10 +219,10 @@ static void SUHOSIN7_Gen_entropy(php_uint32 *entropybuf TSRMLS_DC)
 
 /* {{{ suhosin_srand_auto
  */
-static void suhosin_srand_auto(TSRMLS_D)
+static void suhosin_srand_auto()
 {
 	php_uint32 seed[8];    
-	SUHOSIN7_Gen_entropy(&seed[0] TSRMLS_CC);
+	SUHOSIN7_Gen_entropy(&seed[0]);
 
 	suhosin_mt_init_by_array(seed, 8, SUHOSIN7_G(r_state));
 	suhosin_mt_reload(SUHOSIN7_G(r_state), &SUHOSIN7_G(r_next), &SUHOSIN7_G(r_left));
@@ -234,10 +234,10 @@ static void suhosin_srand_auto(TSRMLS_D)
 
 /* {{{ suhosin_mt_srand_auto
  */
-static void suhosin_mt_srand_auto(TSRMLS_D)
+static void suhosin_mt_srand_auto()
 {
 	php_uint32 seed[8];    
-	SUHOSIN7_Gen_entropy(&seed[0] TSRMLS_CC);
+	SUHOSIN7_Gen_entropy(&seed[0]);
 
 	suhosin_mt_init_by_array(seed, 8, SUHOSIN7_G(mt_state));
 	suhosin_mt_reload(SUHOSIN7_G(mt_state), &SUHOSIN7_G(mt_next), &SUHOSIN7_G(mt_left));
@@ -250,7 +250,7 @@ static void suhosin_mt_srand_auto(TSRMLS_D)
 
 /* {{{ suhosin_srand
  */
-static void suhosin_srand(php_uint32 seed TSRMLS_DC)
+static void suhosin_srand(php_uint32 seed)
 {
 	/* Seed the generator with a simple uint32 */
 	suhosin_mt_initialize(seed+0x12345, SUHOSIN7_G(r_state));
@@ -263,7 +263,7 @@ static void suhosin_srand(php_uint32 seed TSRMLS_DC)
 
 /* {{{ suhosin_mt_rand
  */
-static php_uint32 suhosin_rand(TSRMLS_D)
+static php_uint32 suhosin_rand()
 {
 	/* Pull a 32-bit integer from the generator state
 	   Every other access function simply transforms the numbers extracted here */
@@ -293,14 +293,14 @@ static int ih_srand(IH_HANDLER_PARAMS)
 		return 1;
 	}
 	
-	if (zend_parse_parameters(argc TSRMLS_CC, "|l", &seed) == FAILURE) {
+	if (zend_parse_parameters(argc, "|l", &seed) == FAILURE) {
 		return 1;
 	}
 
 	if (argc) {
-		suhosin_srand(seed TSRMLS_CC);
+		suhosin_srand(seed);
 	} else {
-		suhosin_srand_auto(TSRMLS_C);
+		suhosin_srand_auto();
 	}
 	return (1);
 }
@@ -315,14 +315,14 @@ static int ih_mt_srand(IH_HANDLER_PARAMS)
 		return 1;
 	}
 	
-	if (zend_parse_parameters(argc TSRMLS_CC, "|l", &seed) == FAILURE) {
+	if (zend_parse_parameters(argc, "|l", &seed) == FAILURE) {
 		return 1;
 	}
 
 	if (argc) {
-		suhosin_mt_srand(seed TSRMLS_CC);
+		suhosin_mt_srand(seed);
 	} else {
-		suhosin_mt_srand_auto(TSRMLS_C);
+		suhosin_mt_srand_auto();
 	}
 	return 1;
 }
@@ -334,15 +334,15 @@ static int ih_mt_rand(IH_HANDLER_PARAMS)
 	long max;
 	long number;
 
-	if (argc != 0 && zend_parse_parameters(argc TSRMLS_CC, "ll", &min, &max) == FAILURE) {
+	if (argc != 0 && zend_parse_parameters(argc, "ll", &min, &max) == FAILURE) {
 	    return (1);        
 	}
 
 	if (!SUHOSIN7_G(mt_is_seeded)) {
-		suhosin_mt_srand_auto(TSRMLS_C);
+		suhosin_mt_srand_auto();
 	}
 
-	number = (long) (suhosin_mt_rand(TSRMLS_C) >> 1);
+	number = (long) (suhosin_mt_rand() >> 1);
 	if (argc == 2) {
 		RAND_RANGE(number, min, max, PHP_MT_RAND_MAX);
 	}
@@ -358,15 +358,15 @@ static int ih_rand(IH_HANDLER_PARAMS)
 	long max;
 	long number;
 
-	if (argc != 0 && zend_parse_parameters(argc TSRMLS_CC, "ll", &min, &max) == FAILURE) {
+	if (argc != 0 && zend_parse_parameters(argc, "ll", &min, &max) == FAILURE) {
 	    return (1);        
 	}
 
 	if (!SUHOSIN7_G(r_is_seeded)) {
-		suhosin_srand_auto(TSRMLS_C);
+		suhosin_srand_auto();
 	}
 
-	number = (long) (suhosin_rand(TSRMLS_C) >> 1);
+	number = (long) (suhosin_rand() >> 1);
 	if (argc == 2) {
 		RAND_RANGE(number, min, max, PHP_MT_RAND_MAX);
 	}

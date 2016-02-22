@@ -181,7 +181,7 @@ void suhosin_aes_gentables()
     }
 }
 
-void suhosin_aes_gkey(int nb,int nk,char *key TSRMLS_DC)
+void suhosin_aes_gkey(int nb,int nk,char *key)
 { /* blocksize=32*nb bits. Key=32*nk bits */
   /* currently nb,bk = 4, 6 or 8          */
   /* key comes as 4*Nk bytes              */
@@ -253,7 +253,7 @@ void suhosin_aes_gkey(int nb,int nk,char *key TSRMLS_DC)
  * Instead of just one ftable[], I could have 4, the other     *
  * 3 pre-rotated to save the ROTL8, ROTL16 and ROTL24 overhead */ 
 
-void suhosin_aes_encrypt(char *buff TSRMLS_DC)
+void suhosin_aes_encrypt(char *buff)
 {
     int i,j,k,m;
     WORD a[8],b[8],*x,*y,*t;
@@ -300,7 +300,7 @@ void suhosin_aes_encrypt(char *buff TSRMLS_DC)
     return;
 }
 
-void suhosin_aes_decrypt(char *buff TSRMLS_DC)
+void suhosin_aes_decrypt(char *buff)
 {
     int i,j,k,m;
     WORD a[8],b[8],*x,*y,*t;

@@ -49,7 +49,7 @@ static PHP_FUNCTION(suhosin_sha256)
 	suhosin_SHA256_CTX context;
 	unsigned char digest[32];
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|b", &arg, &arg_len, &raw_output) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|b", &arg, &arg_len, &raw_output) == FAILURE) {
 		return;
 	}
 
@@ -82,7 +82,7 @@ static PHP_FUNCTION(suhosin_sha256_file)
 	int           n;
 	php_stream    *stream;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|b", &arg, &arg_len, &raw_output) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p|b", &arg, &arg_len, &raw_output) == FAILURE) {
 		return;
 	}
 
@@ -391,7 +391,7 @@ static zend_function_entry suhosin_sha256_functions[] = {
 /* }}} */
 
 
-void suhosin_hook_sha256(TSRMLS_D)
+void suhosin_hook_sha256()
 {
 	/* check if we already have sha256 support */
 	if (zend_hash_str_find(CG(function_table), ZEND_STRL("sha256"))) {
@@ -399,7 +399,7 @@ void suhosin_hook_sha256(TSRMLS_D)
 	}
 	
 	/* add the sha256 functions */
-	zend_register_functions(NULL, suhosin_sha256_functions, NULL, MODULE_PERSISTENT TSRMLS_CC);
+	zend_register_functions(NULL, suhosin_sha256_functions, NULL, MODULE_PERSISTENT);
 }
 
 

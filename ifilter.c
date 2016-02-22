@@ -216,12 +216,12 @@ static void suhosin_server_encode(HashTable *arr, char *key, int klen)
 
 /* {{{ suhosin_register_server_variables
  */
-void suhosin_register_server_variables(zval *track_vars_array TSRMLS_DC)
+void suhosin_register_server_variables(zval *track_vars_array)
 {
 	HashTable *svars;
 	int retval = 0, failure = 0;
 
-	orig_register_server_variables(track_vars_array TSRMLS_CC);
+	orig_register_server_variables(track_vars_array);
 
 	svars = Z_ARRVAL_P(track_vars_array);
 	if (!SUHOSIN7_G(simulation)) {
@@ -285,7 +285,7 @@ void suhosin_register_server_variables(zval *track_vars_array TSRMLS_DC)
 
 
 /* Old Input filter */
-// unsigned int (*old_input_filter)(int arg, char *var, char **val, unsigned int val_len, unsigned int *new_val_len TSRMLS_DC) = NULL;
+// unsigned int (*old_input_filter)(int arg, char *var, char **val, unsigned int val_len, unsigned int *new_val_len) = NULL;
 unsigned int (*old_input_filter)(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 
 /* {{{ suhosin_input_filter_wrapper

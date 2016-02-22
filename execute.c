@@ -55,8 +55,8 @@ ZEND_API static void (*old_execute_internal)(zend_execute_data *execute_data, zv
 ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, zval *return_value);
 ZEND_API static void (*old_execute)(zend_op_array *op_array, zval *return_value);
 ZEND_API static void suhosin_execute(zend_op_array *op_array, zval *return_value);
-// static void (*old_execute_ZO)(zend_op_array *op_array, long dummy TSRMLS_DC);
-// static void suhosin_execute_ZO(zend_op_array *op_array, long dummy TSRMLS_DC);
+// static void (*old_execute_ZO)(zend_op_array *op_array, long dummy);
+// static void suhosin_execute_ZO(zend_op_array *op_array, long dummy);
 // static void *(*zo_set_oe_ex)(void *ptr) = NULL;
 
 
@@ -248,7 +248,7 @@ static int suhosin_check_filename(char *s, int len)
 
 // ZEND_API static int (*old_zend_stream_open)(const char *filename, zend_file_handle *handle);
 // 
-// static int suhosin_zend_stream_open(const char *filename, zend_file_handle *fh TSRMLS_DC)
+// static int suhosin_zend_stream_open(const char *filename, zend_file_handle *fh)
 // {
 // 	zend_execute_data *exd;
 // 	exd=EG(current_execute_data);
@@ -258,45 +258,45 @@ static int suhosin_check_filename(char *s, int len)
 // 		switch (filetype) {
 // 		    case SUHOSIN_CODE_TYPE_LONGNAME:
 // 			suhosin_log(S_INCLUDE, "Include filename ('%s') is too long", filename);
-// 			suhosin_bailout(TSRMLS_C);
+// 			suhosin_bailout();
 // 			break;
 // 
 // 		    case SUHOSIN_CODE_TYPE_UPLOADED:
 // 			suhosin_log(S_INCLUDE, "Include filename is an uploaded file");
-// 			suhosin_bailout(TSRMLS_C);
+// 			suhosin_bailout();
 // 			break;
 // 		    
 // 		    case SUHOSIN_CODE_TYPE_0FILE:
 // 			suhosin_log(S_INCLUDE, "Include filename contains an ASCIIZ character");
-// 			suhosin_bailout(TSRMLS_C);
+// 			suhosin_bailout();
 // 			break;
 // 		
 // 		    case SUHOSIN_CODE_TYPE_WRITABLE:
 // 			suhosin_log(S_INCLUDE, "Include filename ('%s') is writable by PHP process", filename);
-// 			suhosin_bailout(TSRMLS_C);
+// 			suhosin_bailout();
 // 			break;		    	
 // 
 // 		    case SUHOSIN_CODE_TYPE_BLACKURL:
 // 			suhosin_log(S_INCLUDE, "Include filename ('%s') is a URL that is forbidden by the blacklist", filename);
-// 			suhosin_bailout(TSRMLS_C);
+// 			suhosin_bailout();
 // 			break;
 // 			
 // 		    case SUHOSIN_CODE_TYPE_BADURL:
 // 			suhosin_log(S_INCLUDE, "Include filename ('%s') is a URL that is not allowed", filename);
-// 			suhosin_bailout(TSRMLS_C);
+// 			suhosin_bailout();
 // 			break;
 // 
 // 		    case SUHOSIN_CODE_TYPE_MANYDOTS:
 // 			suhosin_log(S_INCLUDE, "Include filename ('%s') contains too many '../'", filename);
-// 			suhosin_bailout(TSRMLS_C);
+// 			suhosin_bailout();
 // 			break;
 // 		}
 // 	}
-// 	return old_zend_stream_open(filename, fh TSRMLS_CC);
+// 	return old_zend_stream_open(filename, fh);
 // }
 
 
-static int suhosin_detect_codetype(zend_op_array *op_array TSRMLS_DC)
+static int suhosin_detect_codetype(zend_op_array *op_array)
 {
 	if (op_array->filename == NULL) {
 		return SUHOSIN_CODE_TYPE_UNKNOWN;
@@ -353,7 +353,7 @@ static int suhosin_detect_codetype(zend_op_array *op_array TSRMLS_DC)
 		
 	} else {
 
-		return suhosin_check_filename(s, strlen(s) TSRMLS_CC);
+		return suhosin_check_filename(s, strlen(s));
 
 	}
 	
@@ -414,7 +414,7 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		// 		
 		// 			ctr.line_len = spprintf(&ctr.line, 0, "Location: %s", action);
 		// 			ctr.response_code = code;
-		// 			sapi_header_op(SAPI_HEADER_REPLACE, &ctr TSRMLS_CC);
+		// 			sapi_header_op(SAPI_HEADER_REPLACE, &ctr);
 		// 			efree(ctr.line);
 		// 		} else {
 		// 			zend_file_handle file_handle;
@@ -425,17 +425,17 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		// 				code = 200;
 		// 			}
 		// 		
-		// 			if (zend_stream_open(action, &file_handle TSRMLS_CC) == SUCCESS) {
+		// 			if (zend_stream_open(action, &file_handle) == SUCCESS) {
 		// 				if (!file_handle.opened_path) {
 		// 					file_handle.opened_path = estrndup(action, strlen(action));
 		// 				}
-		// 				new_op_array = zend_compile_file(&file_handle, ZEND_REQUIRE TSRMLS_CC);
-		// 				zend_destroy_file_handle(&file_handle TSRMLS_CC);
+		// 				new_op_array = zend_compile_file(&file_handle, ZEND_REQUIRE);
+		// 				zend_destroy_file_handle(&file_handle);
 		// 				if (new_op_array) {
 		// 					EG(return_value_ptr_ptr) = &result;
 		// 					EG(active_op_array) = new_op_array;
-		// 					zend_execute(new_op_array TSRMLS_CC);
-		// 					destroy_op_array(new_op_array TSRMLS_CC);
+		// 					zend_execute(new_op_array);
+		// 					destroy_op_array(new_op_array);
 		// 					efree(new_op_array);
 		// 
 		// 					if (!EG(exception))
@@ -454,7 +454,7 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		// 		}
 		// 	}
 		// 
-		// 	sapi_header_op(SAPI_HEADER_SET_STATUS, (void *)code TSRMLS_CC);
+		// 	sapi_header_op(SAPI_HEADER_SET_STATUS, (void *)code);
 		// 	zend_bailout();
 		// }
 	}
@@ -465,7 +465,7 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 	
 	if (SUHOSIN7_G(max_execution_depth) && SUHOSIN7_G(execution_depth) > SUHOSIN7_G(max_execution_depth)) {
 		suhosin_log(S_EXECUTOR|S_GETCALLER, "maximum execution depth reached - script terminated");
-		suhosin_bailout(TSRMLS_C);
+		suhosin_bailout();
 	}
 	
 	// fn = (char *)execute_data->func->op_array.filename;
@@ -539,37 +539,37 @@ not_evaled_code:
 		
 		case SUHOSIN_CODE_TYPE_LONGNAME:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') is too long", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout(TSRMLS_C);
+			suhosin_bailout();
 			break;
 
 		case SUHOSIN_CODE_TYPE_MANYDOTS:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') contains too many '../'", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout(TSRMLS_C);
+			suhosin_bailout();
 			break;
 	    
 		case SUHOSIN_CODE_TYPE_UPLOADED:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename is an uploaded file");
-			suhosin_bailout(TSRMLS_C);
+			suhosin_bailout();
 			break;
 			
 	    case SUHOSIN_CODE_TYPE_0FILE:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename contains an ASCIIZ character");
-			suhosin_bailout(TSRMLS_C);
+			suhosin_bailout();
 			break;
 			
 		case SUHOSIN_CODE_TYPE_WRITABLE:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') is writable by PHP process", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout(TSRMLS_C);
+			suhosin_bailout();
 			break;		    	
 
 	    case SUHOSIN_CODE_TYPE_BLACKURL:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') is a URL that is forbidden by the blacklist", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout(TSRMLS_C);
+			suhosin_bailout();
 			break;
 			
 	    case SUHOSIN_CODE_TYPE_BADURL:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') is a URL that is not allowed", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout(TSRMLS_C);
+			suhosin_bailout();
 			break;
 
 	    case SUHOSIN_CODE_TYPE_BADFILE:
@@ -577,12 +577,12 @@ not_evaled_code:
 // #define DIE_WITH_MSG "die('disallowed_file'.chr(10).chr(10));"
 // 		    cs.value.str.val = estrndup(DIE_WITH_MSG, sizeof(DIE_WITH_MSG)-1);
 // 		    cs.value.str.len = sizeof(DIE_WITH_MSG)-1;
-// 		    new_op_array = compile_string(&cs, "suhosin internal code" TSRMLS_CC);
+// 		    new_op_array = compile_string(&cs, "suhosin internal code");
 // 		    if (new_op_array) {
 // 				op_array = new_op_array;
 // 				goto continue_execution;
 // 		    }
-		    suhosin_bailout(TSRMLS_C);
+		    suhosin_bailout();
 		    break;
 
 	    case SUHOSIN_CODE_TYPE_COMMANDLINE:
@@ -626,7 +626,7 @@ typedef struct _internal_function_handler {
 // 	     **subject,
 // 	     **limit, **zcount;
 // 
-// 	 if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ZZZ|ZZ", &regex, &replace, &subject, &limit, &zcount) == FAILURE) {
+// 	 if (zend_parse_parameters(ZEND_NUM_ARGS(), "ZZZ|ZZ", &regex, &replace, &subject, &limit, &zcount) == FAILURE) {
 // 	 	return(0);
 // 	 }
 // 		
@@ -693,7 +693,7 @@ typedef struct _internal_function_handler {
 // 		return (0);
 // 	}
 // 
-// 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sss|ss",
+// 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sss|ss",
 // 						  &to, &to_len,
 // 						  &subject, &subject_len,
 // 						  &message, &message_len,
@@ -790,7 +790,7 @@ typedef struct _internal_function_handler {
 // 
 // int ih_querycheck(IH_HANDLER_PARAMS)
 // {
-// 	void **p = zend_vm_stack_top(TSRMLS_C) - 1;
+// 	void **p = zend_vm_stack_top() - 1;
 // 	unsigned long arg_count;
 // 	zval **arg;
 // 	char *query, *s, *e;
@@ -916,28 +916,28 @@ typedef struct _internal_function_handler {
 // 	if (cnt_opencomment && SUHOSIN7_G(sql_opencomment)>0) {
 // 	    suhosin_log(S_SQL, "Open comment in SQL query: '%*s'", len, query);
 // 	    if (SUHOSIN7_G(sql_opencomment)>1) {
-// 		suhosin_bailout(TSRMLS_C);
+// 		suhosin_bailout();
 // 	    }
 // 	}
 // 	
 // 	if (cnt_comment && SUHOSIN7_G(sql_comment)>0) {
 // 	    suhosin_log(S_SQL, "Comment in SQL query: '%*s'", len, query);
 // 	    if (SUHOSIN7_G(sql_comment)>1) {
-// 		suhosin_bailout(TSRMLS_C);
+// 		suhosin_bailout();
 // 	    }
 // 	}
 // 
 // 	if (cnt_union && SUHOSIN7_G(sql_union)>0) {
 // 	    suhosin_log(S_SQL, "UNION in SQL query: '%*s'", len, query);
 // 	    if (SUHOSIN7_G(sql_union)>1) {
-// 		suhosin_bailout(TSRMLS_C);
+// 		suhosin_bailout();
 // 	    }
 // 	}
 // 
 // 	if (cnt_select>1 && SUHOSIN7_G(sql_mselect)>0) {
 // 	    suhosin_log(S_SQL, "Multiple SELECT in SQL query: '%*s'", len, query);
 // 	    if (SUHOSIN7_G(sql_mselect)>1) {
-// 		suhosin_bailout(TSRMLS_C);
+// 		suhosin_bailout();
 // 	    }
 // 	}
 //     
@@ -947,7 +947,7 @@ typedef struct _internal_function_handler {
 // 
 // int ih_fixusername(IH_HANDLER_PARAMS)
 // {
-// 	void **p = zend_vm_stack_top(TSRMLS_C) - 1;
+// 	void **p = zend_vm_stack_top() - 1;
 // 	unsigned long arg_count;
 // 	zval **arg;
 // 	char *prefix, *postfix, *user, *user_match, *cp;
@@ -1197,8 +1197,8 @@ internal_function_handler ihandlers[] = {
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 
-#define FUNCTION_WARNING() zend_error(E_WARNING, "%s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
-#define FUNCTION_SIMULATE_WARNING() zend_error(E_WARNING, "SIMULATION - %s() has been disabled for security reasons", get_active_function_name(TSRMLS_C));
+#define FUNCTION_WARNING() zend_error(E_WARNING, "%s() has been disabled for security reasons", get_active_function_name());
+#define FUNCTION_SIMULATE_WARNING() zend_error(E_WARNING, "SIMULATION - %s() has been disabled for security reasons", get_active_function_name());
 
 /* {{{ void suhosin_execute_internal
  *    This function provides a hook for internal execution */
@@ -1324,7 +1324,7 @@ execute_internal_bailout:
 	// 	efree(lcname);
 	// }
 	FUNCTION_WARNING()
-	suhosin_bailout(TSRMLS_C);
+	suhosin_bailout();
 }
 /* }}} */
 
@@ -1365,7 +1365,7 @@ void suhosin_hook_execute()
 		zo_set_oe_ex = (void *)DL_FETCH_SYMBOL(NULL, "zend_optimizer_set_oe_ex");
 	}
 	if (zo_set_oe_ex == NULL) {	
-		zend_llist_apply(&zend_extensions, (llist_apply_func_t)function_lookup TSRMLS_CC);
+		zend_llist_apply(&zend_extensions, (llist_apply_func_t)function_lookup);
 	}
 
 	if (zo_set_oe_ex != NULL) {
