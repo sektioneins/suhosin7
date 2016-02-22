@@ -516,7 +516,8 @@ PHP_MINIT_FUNCTION(suhosin7)
 	suhosin_hook_treat_data();
 	suhosin_hook_execute();
 	suhosin_hook_register_server_variables();
-	
+	// suhosin_hook_sha256();
+
 	return SUCCESS;
 }
 /* }}} */
@@ -547,7 +548,6 @@ PHP_RINIT_FUNCTION(suhosin7)
 PHP_RSHUTDOWN_FUNCTION(suhosin7)
 {
 	SDEBUG("(RSHUTDOWN)");
-
 	return SUCCESS;
 }
 /* }}} */

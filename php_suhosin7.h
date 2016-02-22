@@ -128,7 +128,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	
 	zend_bool	simulation;
 	// zend_bool stealth;
-	zend_bool	already_scanned;
+	// zend_bool	already_scanned;
 	zend_bool	abort_request;
 	// 
 	
@@ -247,7 +247,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	/* misc */
 	zend_bool	coredump;
 	// zend_bool	apc_bug_workaround;
-	zend_bool       do_not_scan;
+	// zend_bool       do_not_scan;
 	// 
 	zend_bool	server_encode;
 	zend_bool	server_strip;
@@ -372,6 +372,7 @@ void suhosin_hook_memory_limit();
 void suhosin_hook_treat_data();
 void suhosin_hook_execute();
 void suhosin_hook_register_server_variables();
+// void suhosin_hook_sha256();
 
 static inline void suhosin_bailout()
 {

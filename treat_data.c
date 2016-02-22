@@ -144,6 +144,7 @@ SAPI_TREAT_DATA_FUNC(suhosin_treat_data)
 			php_error_docref(NULL, E_WARNING, "Input variables exceeded " ZEND_LONG_FMT ". To increase the limit change max_input_vars in php.ini.", PG(max_input_vars));
 			break;
 		}
+		SDEBUG("calling input filter from treat_data");
 
 		if (val) { /* have a value */
 			size_t val_len;
@@ -154,9 +155,9 @@ SAPI_TREAT_DATA_FUNC(suhosin_treat_data)
 			val_len = php_url_decode(val, strlen(val));
 			val = estrndup(val, val_len);
 			if (suhosin_input_filter(arg, var, &val, val_len, &new_val_len)) {
-				if (sapi_module.input_filter(arg, var, &val, new_val_len, &new_val_len)) {
+				// if (sapi_module.input_filter(arg, var, &val, new_val_len, &new_val_len)) {
 					php_register_variable_safe(var, val, new_val_len, &array);
-				}
+				// }
 			} else {
 				SUHOSIN7_G(abort_request) = 1;
 			}
@@ -169,9 +170,9 @@ SAPI_TREAT_DATA_FUNC(suhosin_treat_data)
 			val_len = 0;
 			val = estrndup("", val_len);
 			if (suhosin_input_filter(arg, var, &val, val_len, &new_val_len)) {
-				if (sapi_module.input_filter(arg, var, &val, new_val_len, &new_val_len)) {
+				// if (sapi_module.input_filter(arg, var, &val, new_val_len, &new_val_len)) {
 					php_register_variable_safe(var, val, new_val_len, &array);
-				}
+				// }
 			} else {
 				SUHOSIN7_G(abort_request) = 1;
 			}
@@ -194,8 +195,8 @@ next_cookie:
 
 void suhosin_hook_treat_data()
 {
-	sapi_register_treat_data(suhosin_treat_data);
-
+	// sapi_register_treat_data(suhosin_treat_data);
+	
 	if (old_input_filter == NULL) {
 		old_input_filter = sapi_module.input_filter;
 	}

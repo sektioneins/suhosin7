@@ -295,15 +295,16 @@ unsigned int suhosin_input_filter_wrapper(int arg, char *var, char **val, size_t
 	// zend_bool already_scanned = SUHOSIN7_G(already_scanned);
 	// SUHOSIN7_G(already_scanned) = 0;
 	// SDEBUG("ifilter arg=%d var=%s do_not_scan=%d already_scanned=%d", arg, var, SUHOSIN7_G(do_not_scan), already_scanned);
-	SDEBUG("ifilter arg=%d var=%s do_not_scan=%d", arg, var, SUHOSIN7_G(do_not_scan));
+	// SDEBUG("ifilter arg=%d var=%s do_not_scan=%d", arg, var, SUHOSIN7_G(do_not_scan));
+	SDEBUG("ifilter arg=%d var=%s", arg, var);
 	
-	if (SUHOSIN7_G(do_not_scan)) {
-		SDEBUG("do_not_scan");
-		if (new_val_len) {
-			*new_val_len = val_len;
-		}
-		return 1;
-	}
+	// if (SUHOSIN7_G(do_not_scan)) {
+	// 	SDEBUG("do_not_scan");
+	// 	if (new_val_len) {
+	// 		*new_val_len = val_len;
+	// 	}
+	// 	return 1;
+	// }
 	
 	// if (!already_scanned) {
 		if (suhosin_input_filter(arg, var, val, val_len, new_val_len)==0) {

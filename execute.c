@@ -364,6 +364,7 @@ static int suhosin_detect_codetype(zend_op_array *op_array)
  *    This function provides a hook for execution */
 ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 {
+	// SDEBUG("X------------------------->")
 	// TODO: check execute_data + execute_data->func
 	
 	zend_op_array *new_op_array;
