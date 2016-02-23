@@ -41,7 +41,7 @@ static size_t strnlen(const char *s, size_t maxlen) {
 }
 #endif
 
-size_t suhosin_strnspn(const char *input, size_t n, const char *accept)
+static size_t suhosin_strnspn(const char *input, size_t n, const char *accept)
 {
 	size_t count = 0;
 	for (; *input != '\0' && count < n; input++, count++) {
@@ -51,7 +51,7 @@ size_t suhosin_strnspn(const char *input, size_t n, const char *accept)
 	return count;
 }
 
-size_t suhosin_strncspn(const char *input, size_t n, const char *reject)
+static size_t suhosin_strncspn(const char *input, size_t n, const char *reject)
 {
 	size_t count = 0;
 	for (; *input != '\0' && count < n; input++, count++) {
@@ -62,9 +62,9 @@ size_t suhosin_strncspn(const char *input, size_t n, const char *reject)
 }
 
 
-/* {{{ normalize_varname
+/* {{{ suhosin_normalize_varname
  */
-void normalize_varname(char *varname)
+void suhosin_normalize_varname(char *varname)
 {
 	char *s=varname, *index=NULL, *indexend=NULL, *p;
 	
@@ -285,46 +285,11 @@ void suhosin_register_server_variables(zval *track_vars_array)
 
 
 /* Old Input filter */
-// unsigned int (*old_input_filter)(int arg, char *var, char **val, unsigned int val_len, unsigned int *new_val_len) = NULL;
-unsigned int (*old_input_filter)(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
-
-/* {{{ suhosin_input_filter_wrapper
- */
-unsigned int suhosin_input_filter_wrapper(int arg, char *var, char **val, size_t val_len, size_t *new_val_len)
-{
-	// zend_bool already_scanned = SUHOSIN7_G(already_scanned);
-	// SUHOSIN7_G(already_scanned) = 0;
-	// SDEBUG("ifilter arg=%d var=%s do_not_scan=%d already_scanned=%d", arg, var, SUHOSIN7_G(do_not_scan), already_scanned);
-	// SDEBUG("ifilter arg=%d var=%s do_not_scan=%d", arg, var, SUHOSIN7_G(do_not_scan));
-	SDEBUG("ifilter arg=%d var=%s", arg, var);
-	
-	// if (SUHOSIN7_G(do_not_scan)) {
-	// 	SDEBUG("do_not_scan");
-	// 	if (new_val_len) {
-	// 		*new_val_len = val_len;
-	// 	}
-	// 	return 1;
-	// }
-	
-	// if (!already_scanned) {
-		if (suhosin_input_filter(arg, var, val, val_len, new_val_len)==0) {
-			SUHOSIN7_G(abort_request)=1;
-			return 0;
-		}
-		if (new_val_len) {
-			val_len = *new_val_len;
-		}
-	// }
-	if (old_input_filter) {
-		return old_input_filter(arg, var, val, val_len, new_val_len);
-	} else {
-		return 1;
-	}
-}
+static SAPI_INPUT_FILTER_FUNC((*orig_input_filter)) = NULL;
 
 /* {{{ suhosin_input_filter
  */
-unsigned int suhosin_input_filter(int arg, char *var, char **val, size_t val_len, size_t *new_val_len)
+static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 {
 	SDEBUG("%s=%s arg=%d", var, *val, arg);
 	char *index, *prev_index = NULL;
@@ -456,7 +421,7 @@ unsigned int suhosin_input_filter(int arg, char *var, char **val, size_t val_len
 	}
 	
 	/* Normalize the variable name */
-	normalize_varname(var);
+	suhosin_normalize_varname(var);
 	
 	/* Find length of variable name */
 	index = strchr(var, '[');
@@ -650,6 +615,39 @@ unsigned int suhosin_input_filter(int arg, char *var, char **val, size_t val_len
 }
 /* }}} */
 
+/* {{{ suhosin_input_filter_wrapper
+ */
+SAPI_INPUT_FILTER_FUNC(suhosin_input_filter_wrapper)
+{
+	// zend_bool already_scanned = SUHOSIN7_G(already_scanned);
+	// SUHOSIN7_G(already_scanned) = 0;
+	// SDEBUG("ifilter arg=%d var=%s do_not_scan=%d already_scanned=%d", arg, var, SUHOSIN7_G(do_not_scan), already_scanned);
+	// SDEBUG("ifilter arg=%d var=%s do_not_scan=%d", arg, var, SUHOSIN7_G(do_not_scan));
+	SDEBUG("ifilter arg=%d var=%s", arg, var);
+	
+	// if (SUHOSIN7_G(do_not_scan)) {
+	// 	SDEBUG("do_not_scan");
+	// 	if (new_val_len) {
+	// 		*new_val_len = val_len;
+	// 	}
+	// 	return 1;
+	// }
+	
+	// if (!already_scanned) {
+		if (suhosin_input_filter(arg, var, val, val_len, new_val_len)==0) {
+			SUHOSIN7_G(abort_request)=1;
+			return 0;
+		}
+		if (new_val_len) {
+			val_len = *new_val_len;
+		}
+	// }
+	if (orig_input_filter) {
+		return orig_input_filter(arg, var, val, val_len, new_val_len);
+	} else {
+		return 1;
+	}
+}
 
 
 /* {{{ suhosin_hook_register_server_variables
@@ -662,6 +660,14 @@ void suhosin_hook_register_server_variables()
 	}
 }
 /* }}} */
+
+void suhosin_hook_input_filter()
+{
+	if (orig_input_filter == NULL) {
+		orig_input_filter = sapi_module.input_filter;
+	}
+	sapi_module.input_filter = suhosin_input_filter_wrapper;
+}
 
 
 /*

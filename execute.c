@@ -1198,8 +1198,8 @@ internal_function_handler ihandlers[] = {
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 
-#define FUNCTION_WARNING() zend_error(E_WARNING, "%s() has been disabled for security reasons", get_active_function_name());
-#define FUNCTION_SIMULATE_WARNING() zend_error(E_WARNING, "SIMULATION - %s() has been disabled for security reasons", get_active_function_name());
+#define FUNCTION_WARNING() zend_error(E_WARNING, "%s() has been disabled for security reasons", suhosin_get_active_function_name());
+#define FUNCTION_SIMULATE_WARNING() zend_error(E_WARNING, "SIMULATION - %s() has been disabled for security reasons", suhosin_get_active_function_name());
 
 /* {{{ void suhosin_execute_internal
  *    This function provides a hook for internal execution */

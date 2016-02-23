@@ -1,8 +1,9 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 7                                                        |
+  | Suhosin Version 1                                                    |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2015 The PHP Group                                |
+  | Copyright (c) 2006-2007 The Hardened-PHP Project                     |
+  | Copyright (c) 2007-2016 SektionEins GmbH                             |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -12,7 +13,8 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author:                                                              |
+  | Authors: Stefan Esser <sesser@sektioneins.de>                        |
+  |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
 */
 
@@ -270,16 +272,10 @@ DEF_LOG_UPDATER(OnUpdateSuhosin_log_stdout, log_stdout, "suhosin.log.stdout")
 	STD_PHP_INI_ENTRY(name, default_value, modifiable, on_modify, property_name, zend_suhosin7_globals, suhosin7_globals)
 #define STD_S7_INI_BOOLEAN(name, default_value, modifiable, on_modify, property_name) \
 	STD_PHP_INI_BOOLEAN(name, default_value, modifiable, on_modify, property_name, zend_suhosin7_globals, suhosin7_globals)
-// #define STD_S7_INI_LIST(name, modifiable, )
 
 /* {{{ PHP_INI
  */
 PHP_INI_BEGIN()
-	// STD_S7_INI_BOOLEAN("suhosin.protectkey",      "1", PHP_INI_SYSTEM, OnUpdateBool, protectkey, zend_suhosin7_globals, suhosin7_globals)
-	// STD_S7_INI_BOOLEAN("suhosin.cookie.cryptkey",      "1", PHP_INI_SYSTEM, OnUpdateBool, protectkey, zend_suhosin7_globals, suhosin7_globals)
-	// STD_S7_INI_ENTRY("suhosin.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_suhosin7_globals, suhosin7_globals)
-	// STD_S7_INI_ENTRY("suhosin.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_suhosin7_globals, suhosin7_globals)
-	
 	PHP_INI_ENTRY("suhosin.perdir",					"0",	PHP_INI_SYSTEM,	OnUpdateSuhosin_perdir)
 	// PHP_INI_ENTRY("suhosin.log.syslog",				NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_syslog)
 	// PHP_INI_ENTRY("suhosin.log.syslog.facility",	NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_log_syslog_facility)
@@ -311,14 +307,14 @@ PHP_INI_BEGIN()
 	STD_S7_INI_ENTRY("suhosin.executor.max_depth",		"750",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecLong, max_execution_depth)
 	// 
 	// 
-	// STD_S7_INI_BOOLEAN("suhosin.multiheader",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, allow_multiheader)
+	STD_S7_INI_BOOLEAN("suhosin.multiheader",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, allow_multiheader)
 	// STD_S7_INI_ENTRY("suhosin.mail.protect",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscLong, mailprotect)
 	// STD_S7_INI_ENTRY("suhosin.memory_limit",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscLong, memory_limit)
 	// STD_S7_INI_BOOLEAN("suhosin.simulation",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, simulation)
 	// STD_S7_INI_ENTRY("suhosin.filter.action",			NULL,	PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscString, filter_action)
 	// 
-	// STD_S7_INI_BOOLEAN("suhosin.protectkey",			"1",	PHP_INI_SYSTEM,	OnUpdateBool, protectkey)
-	// STD_S7_INI_BOOLEAN("suhosin.coredump",				"0",	PHP_INI_SYSTEM,	OnUpdateBool, coredump)
+	STD_S7_INI_BOOLEAN("suhosin.protectkey",			"1",	PHP_INI_SYSTEM,	OnUpdateBool, protectkey)
+	STD_S7_INI_BOOLEAN("suhosin.coredump",				"0",	PHP_INI_SYSTEM,	OnUpdateBool, coredump)
 	// STD_S7_INI_BOOLEAN("suhosin.stealth",				"1",	PHP_INI_SYSTEM,	OnUpdateBool, stealth)
 	// STD_S7_INI_BOOLEAN("suhosin.apc_bug_workaround",	"0",	PHP_INI_SYSTEM,	OnUpdateBool, apc_bug_workaround)
 	STD_S7_INI_BOOLEAN("suhosin.disable.display_errors",	"0",	PHP_INI_SYSTEM,	OnUpdate_disable_display_errors, disable_display_errors)
@@ -399,15 +395,15 @@ PHP_INI_BEGIN()
 #endif /* HAVE_PHP_SESSION */
 
 
-	// STD_S7_INI_BOOLEAN("suhosin.cookie.encrypt",		"0",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateCookieBool, cookie_encrypt)
-	// STD_S7_INI_ENTRY("suhosin.cookie.cryptkey", "", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateCookieString, cookie_cryptkey)
-	// STD_S7_INI_BOOLEAN("suhosin.cookie.cryptua",		"1",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateCookieBool, cookie_cryptua)
-	// STD_S7_INI_BOOLEAN("suhosin.cookie.cryptdocroot",		"1",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateCookieBool, cookie_cryptdocroot)
-	// STD_S7_INI_ENTRY("suhosin.cookie.cryptraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateCookieLong, cookie_cryptraddr)	
-	// STD_S7_INI_ENTRY("suhosin.cookie.checkraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateCookieLong, cookie_checkraddr)	
+	STD_S7_INI_BOOLEAN("suhosin.cookie.encrypt",		"0",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateCookieBool, cookie_encrypt)
+	STD_S7_INI_ENTRY("suhosin.cookie.cryptkey", "", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateCookieString, cookie_cryptkey)
+	STD_S7_INI_BOOLEAN("suhosin.cookie.cryptua",		"1",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateCookieBool, cookie_cryptua)
+	STD_S7_INI_BOOLEAN("suhosin.cookie.cryptdocroot",		"1",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateCookieBool, cookie_cryptdocroot)
+	STD_S7_INI_ENTRY("suhosin.cookie.cryptraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateCookieLong, cookie_cryptraddr)
+	STD_S7_INI_ENTRY("suhosin.cookie.checkraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateCookieLong, cookie_checkraddr)
 	PHP_INI_ENTRY("suhosin.cookie.cryptlist",	NULL,		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_cookie_cryptlist)
 	PHP_INI_ENTRY("suhosin.cookie.plainlist",	NULL,		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_cookie_plainlist)
-	// 
+	//
 	STD_S7_INI_BOOLEAN("suhosin.server.encode", "1", PHP_INI_SYSTEM, OnUpdateBool, server_encode)
 	STD_S7_INI_BOOLEAN("suhosin.server.strip", "1", PHP_INI_SYSTEM, OnUpdateBool, server_strip)
 	// 
@@ -511,11 +507,17 @@ PHP_MINIT_FUNCTION(suhosin7)
 		zend_string_release(val0);
 	}
 
+	// init
+	suhosin_aes_gentables();
+
 	// hooks
-	// suhosin_hook_memory_limit();
 	suhosin_hook_treat_data();
-	suhosin_hook_execute();
+	suhosin_hook_input_filter();
 	suhosin_hook_register_server_variables();
+	suhosin_hook_header_handler();
+	suhosin_hook_execute();
+
+	// suhosin_hook_memory_limit();
 	// suhosin_hook_sha256();
 
 	return SUCCESS;
@@ -538,6 +540,9 @@ PHP_MSHUTDOWN_FUNCTION(suhosin7)
 PHP_RINIT_FUNCTION(suhosin7)
 {
 	SDEBUG("(RINIT)");
+	SUHOSIN7_G(in_code_type) = SUHOSIN_NORMAL;
+	SUHOSIN7_G(execution_depth) = 0;
+
 	return SUCCESS;
 }
 /* }}} */
@@ -548,6 +553,43 @@ PHP_RINIT_FUNCTION(suhosin7)
 PHP_RSHUTDOWN_FUNCTION(suhosin7)
 {
 	SDEBUG("(RSHUTDOWN)");
+	/* We need to clear the input filtering 
+	   variables in the request shutdown
+	   because input filtering is done before 
+	   RINIT */
+
+	SUHOSIN7_G(cur_request_variables) = 0;
+	SUHOSIN7_G(cur_cookie_vars) = 0;
+	SUHOSIN7_G(cur_get_vars) = 0;
+	SUHOSIN7_G(cur_post_vars) = 0;
+	SUHOSIN7_G(att_request_variables) = 0;
+	SUHOSIN7_G(att_cookie_vars) = 0;
+	SUHOSIN7_G(att_get_vars) = 0;
+	SUHOSIN7_G(att_post_vars) = 0;
+	// SUHOSIN7_G(num_uploads) = 0;
+
+	SUHOSIN7_G(no_more_variables) = 0;
+	SUHOSIN7_G(no_more_get_variables) = 0;
+	SUHOSIN7_G(no_more_post_variables) = 0;
+	SUHOSIN7_G(no_more_cookie_variables) = 0;
+	SUHOSIN7_G(no_more_uploads) = 0;
+
+	SUHOSIN7_G(abort_request) = 0;
+
+	// if (SUHOSIN7_G(reseed_every_request)) {
+	// 	SUHOSIN7_G(r_is_seeded) = 0;
+	// 	SUHOSIN7_G(mt_is_seeded) = 0;
+	// }
+
+	if (SUHOSIN7_G(decrypted_cookie)) {
+		efree(SUHOSIN7_G(decrypted_cookie));
+		SUHOSIN7_G(decrypted_cookie)=NULL;
+	}
+	if (SUHOSIN7_G(raw_cookie)) {
+		efree(SUHOSIN7_G(raw_cookie));
+		SUHOSIN7_G(raw_cookie)=NULL;
+	}
+
 	return SUCCESS;
 }
 /* }}} */

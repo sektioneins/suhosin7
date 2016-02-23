@@ -122,8 +122,6 @@ protected_varname:
 
 
 ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
-	// zend_long  global_value;
-	// char *global_string;
 	zend_bool	protectkey;
 	
 	zend_bool	simulation;
@@ -307,7 +305,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool log_file_time;
 
 	/*	header handler */
-	// zend_bool allow_multiheader;
+	zend_bool allow_multiheader;
 
 	/*	mailprotect */
 	// long	mailprotect;
@@ -362,17 +360,42 @@ ZEND_EXTERN_MODULE_GLOBALS(suhosin7)
 
 /* functions */
 
-unsigned int suhosin_input_filter(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
-unsigned int suhosin_input_filter_wrapper(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
+// unsigned int suhosin_input_filter(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
+// unsigned int suhosin_input_filter_wrapper(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...);
-extern unsigned int (*old_input_filter)(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
+// extern unsigned int (*orig_input_filter)(int arg, char *var, char **val, size_t val_len, size_t *new_val_len);
 char *suhosin_getenv(char *name, size_t name_len);
 
+// hooks
 void suhosin_hook_memory_limit();
 void suhosin_hook_treat_data();
-void suhosin_hook_execute();
+void suhosin_hook_input_filter();
 void suhosin_hook_register_server_variables();
+void suhosin_hook_header_handler();
+void suhosin_unhook_header_handler();
+void suhosin_hook_execute();
 // void suhosin_hook_sha256();
+
+// ifilter.c
+void suhosin_normalize_varname(char *varname);
+
+// cookiecrypt.c
+char *suhosin_cookie_decryptor(char *raw_cookie);
+zend_string *suhosin_encrypt_single_cookie(char *name, int name_len, char *value, int value_len, char *key);
+char *suhosin_decrypt_single_cookie(char *name, int name_len, char *value, int value_len, char *key, char **out);
+
+// crypt.c
+zend_string *suhosin_encrypt_string(char *str, int len, char *var, int vlen, char *key);
+zend_string *suhosin_decrypt_string(char *str, int padded_len, char *var, int vlen, char *key, int check_ra);
+char *suhosin_generate_key(char *key, zend_bool ua, zend_bool dr, long raddr, char *cryptkey);
+
+// aes.c
+void suhosin_aes_gentables();
+void suhosin_aes_gkey(int nb,int nk,char *key);
+void suhosin_aes_encrypt(char *buff);
+void suhosin_aes_decrypt(char *buff);
+
+//
 
 static inline void suhosin_bailout()
 {
@@ -381,6 +404,13 @@ static inline void suhosin_bailout()
 	}
 }
 
+static inline char *suhosin_get_active_function_name() {
+	char *fn = (char *)get_active_function_name();
+	if (fn == NULL) {
+		return "unknown";
+	}
+	return fn;
+}
 
 #endif	/* PHP_SUHOSIN7_H */
 
