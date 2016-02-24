@@ -18,8 +18,7 @@
 
 /* $Id$ */
 
-#ifndef PHP_SUHOSIN7_H
-#define PHP_SUHOSIN7_H
+#pragma once
 
 extern zend_module_entry suhosin7_module_entry;
 #define phpext_suhosin7_ptr &suhosin7_module_entry
@@ -412,7 +411,6 @@ static inline char *suhosin_get_active_function_name() {
 	return fn;
 }
 
-#endif	/* PHP_SUHOSIN7_H */
 
 
 /*
