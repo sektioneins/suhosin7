@@ -301,7 +301,7 @@ PHP_INI_BEGIN()
 	PHP_INI_ENTRY("suhosin.executor.func.whitelist",	NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_func_whitelist)
 	PHP_INI_ENTRY("suhosin.executor.func.blacklist",	NULL,	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateSuhosin_func_blacklist)
 	// STD_S7_INI_BOOLEAN("suhosin.executor.disable_eval",	"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecBool, executor_disable_eval)
-	// STD_S7_INI_BOOLEAN("suhosin.executor.disable_emodifier",	"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecBool, executor_disable_emod)
+	STD_S7_INI_BOOLEAN("suhosin.executor.disable_emodifier",	"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecBool, executor_disable_emod)
 	// 
 	// STD_S7_INI_BOOLEAN("suhosin.executor.allow_symlink",	"0",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecBool, executor_allow_symlink)
 	STD_S7_INI_ENTRY("suhosin.executor.max_depth",		"750",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecLong, max_execution_depth)

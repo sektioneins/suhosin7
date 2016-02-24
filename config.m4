@@ -5,7 +5,7 @@ PHP_ARG_ENABLE(suhosin7, whether to enable suhosin support,
 [  --enable-suhosin7        Enable suhosin support])
 
 if test "$PHP_SUHOSIN7" != "no"; then
-	PHP_NEW_EXTENSION(suhosin7, suhosin7.c ifilter.c memory_limit.c aes.c treat_data.c log.c execute.c crypt.c cookiecrypt.c header.c, $ext_shared,, -DZEND_ENABLE_STATIC_ACHE=1)
+	PHP_NEW_EXTENSION(suhosin7, suhosin7.c ifilter.c memory_limit.c aes.c treat_data.c log.c execute.c execute_ih.c crypt.c cookiecrypt.c header.c, $ext_shared,, -DZEND_ENABLE_STATIC_ACHE=1)
 	PHP_ADD_EXTENSION_DEP(suhosin7, hash)
 fi
 

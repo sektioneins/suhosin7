@@ -158,22 +158,22 @@ SUHOSIN7_API void suhosin_log(int loglevel, char *fmt, ...)
 	}
 	
 	if (zend_is_executing()) {
-		zend_execute_data *exdata = EG(current_execute_data);
-		if (exdata) {
-			if (getcaller && exdata->prev_execute_data && exdata->prev_execute_data->opline && exdata->prev_execute_data->func) {
-				lineno = exdata->prev_execute_data->opline->lineno;
-				fname = (char *)ZSTR_VAL(exdata->prev_execute_data->func->op_array.filename);
-			} else if (exdata->opline && exdata->func) {
-				lineno = exdata->opline->lineno;
-				fname = (char *)ZSTR_VAL(exdata->func->op_array.filename);
-			} else {
-				lineno = 0;
-				fname = "[unknown filename]";
-			}
-		} else {
+		// zend_execute_data *exdata = EG(current_execute_data);
+		// if (exdata) {
+		// 	if (getcaller && exdata->prev_execute_data && exdata->prev_execute_data->opline && exdata->prev_execute_data->func) {
+		// 		lineno = exdata->prev_execute_data->opline->lineno;
+		// 		fname = (char *)ZSTR_VAL(exdata->prev_execute_data->func->op_array.filename);
+		// 	} else if (exdata->opline && exdata->func) {
+		// 		lineno = exdata->opline->lineno;
+		// 		fname = (char *)ZSTR_VAL(exdata->func->op_array.filename);
+		// 	} else {
+		// 		lineno = 0;
+		// 		fname = "[unknown filename]";
+		// 	}
+		// } else {
 			lineno = zend_get_executed_lineno();
 			fname = (char *)zend_get_executed_filename();
-		}
+		// }
 		ap_php_snprintf(buf, sizeof(buf), "%s - %s (attacker '%s', file '%s', line %u)", alertstring, error, ip_address, fname, lineno);
 	} else {
 		fname = suhosin_getenv("SCRIPT_FILENAME", 15);

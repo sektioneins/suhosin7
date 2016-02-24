@@ -68,7 +68,7 @@ extern zend_module_entry suhosin7_module_entry;
 // PHP_RSHUTDOWN_FUNCTION(suhosin);
 // PHP_MINFO_FUNCTION(suhosin);
 
-#include "ext/standard/basic_functions.h"
+// #include "ext/standard/basic_functions.h"
 
 static inline int suhosin_is_protected_varname(char *var, int var_len)
 {

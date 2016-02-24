@@ -23,29 +23,30 @@
 #include "config.h"
 #endif
 
-#include <fcntl.h>
+// #include <fcntl.h>
 #include "php.h"
-#include "php_ini.h"
-#include "zend_hash.h"
+// #include "php_ini.h"
+// #include "zend_hash.h"
 #include "zend_extensions.h"
-#include "ext/standard/info.h"
-#include "ext/standard/php_rand.h"
-#include "ext/standard/php_lcg.h"
+// #include "ext/standard/info.h"
+// #include "ext/standard/php_rand.h"
+// #include "ext/standard/php_lcg.h"
 #include "php_suhosin7.h"
-#include "zend_compile.h"
-#include "zend_llist.h"
+// #include "zend_compile.h"
+// #include "zend_llist.h"
 #include "SAPI.h"
+#include "execute.h"
 
-#include "sha256.h"
+// #include "sha256.h"
 
 #ifdef PHP_WIN32
-# include "win32/fnmatch.h"
+// # include "win32/fnmatch.h"
 # include "win32/winutil.h"
 # include "win32/time.h"
 #else
-# ifdef HAVE_FNMATCH
-#  include <fnmatch.h>
-# endif
+// # ifdef HAVE_FNMATCH
+// #  include <fnmatch.h>
+// # endif
 # include <sys/time.h>
 #endif
 
@@ -86,7 +87,7 @@ conts:
 #define SUHOSIN_CODE_TYPE_UNKNOWN	0
 #define SUHOSIN_CODE_TYPE_COMMANDLINE	1
 #define SUHOSIN_CODE_TYPE_EVAL		2
-#define SUHOSIN_CODE_TYPE_REGEXP	3
+// #define SUHOSIN_CODE_TYPE_REGEXP	3
 #define SUHOSIN_CODE_TYPE_ASSERT	4
 #define SUHOSIN_CODE_TYPE_CFUNC		5
 #define SUHOSIN_CODE_TYPE_SUHOSIN	6
@@ -98,7 +99,7 @@ conts:
 #define SUHOSIN_CODE_TYPE_BADFILE	12
 #define SUHOSIN_CODE_TYPE_LONGNAME	13
 #define SUHOSIN_CODE_TYPE_MANYDOTS	14
-#define SUHOSIN_CODE_TYPE_WRITABLE      15
+#define SUHOSIN_CODE_TYPE_WRITABLE  15
 #define SUHOSIN_CODE_TYPE_MBREGEXP	16
 
 static int suhosin_check_filename(char *s, int len)
@@ -315,9 +316,9 @@ static int suhosin_detect_codetype(zend_op_array *op_array)
 			return SUHOSIN_CODE_TYPE_EVAL;
 		}
 
-		if (strstr(s, "regexp code") != NULL) {
-			return SUHOSIN_CODE_TYPE_REGEXP;
-		}
+		// if (strstr(s, "regexp code") != NULL) {
+		// 	return SUHOSIN_CODE_TYPE_REGEXP;
+		// }
 
 		if (strstr(s, "mbregex replace") != NULL) {
 			return SUHOSIN_CODE_TYPE_MBREGEXP;
@@ -519,18 +520,23 @@ not_evaled_code:
 		    }
 		    break;
 		    
-	    case SUHOSIN_CODE_TYPE_REGEXP:
+	    // case SUHOSIN_CODE_TYPE_REGEXP:
+		//     if (SUHOSIN7_G(executor_disable_emod)) {
+		// 	    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of preg_replace() with /e modifier is forbidden by configuration");
+		// 	    if (!SUHOSIN7_G(simulation)) {
+		// 		    zend_error(E_ERROR, "SUHOSIN - Use of preg_replace() with /e modifier is forbidden by configuration");
+		// 	    }
+		//     }
+		//     break;
+		    
+		case SUHOSIN_CODE_TYPE_MBREGEXP:
 		    if (SUHOSIN7_G(executor_disable_emod)) {
-			    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of preg_replace() with /e modifier is forbidden by configuration");
+			    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of /e modifier in replace function is forbidden by configuration");
 			    if (!SUHOSIN7_G(simulation)) {
-				    zend_error(E_ERROR, "SUHOSIN - Use of preg_replace() with /e modifier is forbidden by configuration");
+				    zend_error(E_ERROR, "SUHOSIN - Use of /e modifier in replace function is forbidden by configuration");
 			    }
 		    }
 		    break;
-		    
-		case SUHOSIN_CODE_TYPE_MBREGEXP:
-			/* XXX TODO: Do we want to disallow this, too? */
-			break;
 		
 		case SUHOSIN_CODE_TYPE_ASSERT:
 			break;
@@ -603,499 +609,16 @@ continue_execution:
 /* }}} */
 
 
-#define IH_HANDLER_PARAMS_REST int ht, zval *return_value
-#define IH_HANDLER_PARAMS internal_function_handler *ih, IH_HANDLER_PARAMS_REST
-#define IH_HANDLER_PARAM_PASSTHRU ih, ht, return_value
+
+// ----------------------------------------------------------------------------
+
+static HashTable ihandler_table;
 
 
-HashTable ihandler_table;
 
-typedef struct _internal_function_handler {
+static suhosin_internal_function_handler ihandlers[] = {
+	S7_IH_ENTRY0i(preg_replace)
 
-	char *name;
-	int (*handler)(struct _internal_function_handler *ih, IH_HANDLER_PARAMS_REST);
-	void *arg1;
-	void *arg2;
-	void *arg3;
-
-} internal_function_handler;
-
-// int ih_preg_replace(IH_HANDLER_PARAMS)
-// {
-// 	zval **regex,
-// 	     **replace,
-// 	     **subject,
-// 	     **limit, **zcount;
-// 
-// 	 if (zend_parse_parameters(ZEND_NUM_ARGS(), "ZZZ|ZZ", &regex, &replace, &subject, &limit, &zcount) == FAILURE) {
-// 	 	return(0);
-// 	 }
-// 		
-// 	if (Z_TYPE_PP(regex) == IS_ARRAY) {
-// 		zval	**regex_entry;
-// 		
-// 		zend_hash_internal_pointer_reset(Z_ARRVAL_PP(regex));
-// 		/* For each entry in the regex array, get the entry */
-// 		while (zend_hash_get_current_data(Z_ARRVAL_PP(regex), (void **)&regex_entry) == SUCCESS) {
-// 			
-// 			if (Z_TYPE_PP(regex_entry) == IS_STRING) {
-// 				if (strlen(Z_STRVAL_PP(regex_entry)) != Z_STRLEN_PP(regex_entry)) {
-// 					suhosin_log(S_EXECUTOR, "string termination attack on first preg_replace parameter detected");
-// 	    				if (!SUHOSIN7_G(simulation)) {
-// 						RETVAL_FALSE;
-// 						return (1);
-// 					}
-// 				}
-// 			}
-// 				
-// 			zend_hash_move_forward(Z_ARRVAL_PP(regex));
-// 			
-// 		}
-// 			
-// 	} else if (Z_TYPE_PP(regex) == IS_STRING) {
-// 		if (strlen(Z_STRVAL_PP(regex)) != Z_STRLEN_PP(regex)) {
-// 			suhosin_log(S_EXECUTOR, "string termination attack on first preg_replace parameter detected");
-// 			if (!SUHOSIN7_G(simulation)) {
-// 				RETVAL_FALSE;
-// 				return (1);
-// 			}
-// 		}
-// 	}
-// 	
-// 	return (0);
-// }
-
-// int ih_symlink(IH_HANDLER_PARAMS)
-// {
-// 	if (SUHOSIN7_G(executor_allow_symlink)) {
-// 		return (0);
-// 	}
-// 	
-// 	if (PG(open_basedir) && PG(open_basedir)[0]) {
-// 		suhosin_log(S_EXECUTOR, "symlink called during open_basedir");
-// 		if (!SUHOSIN7_G(simulation)) {
-// 			RETVAL_FALSE;
-// 			return (1);
-// 		}
-// 	}
-// 	
-// 	return (0);
-// }
-
-// int ih_mail(IH_HANDLER_PARAMS)
-// {
-// 	char *to=NULL, *message=NULL, *headers=NULL;
-// 	char *subject=NULL, *extra_cmd=NULL;
-// 	char *tmp;
-// 	int to_len, message_len, headers_len;
-// 	int subject_len, extra_cmd_len;
-// 
-// 	if (SUHOSIN7_G(mailprotect) == 0) {
-// 		return (0);
-// 	}
-// 
-// 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sss|ss",
-// 						  &to, &to_len,
-// 						  &subject, &subject_len,
-// 						  &message, &message_len,
-// 						  &headers, &headers_len,
-// 						  &extra_cmd, &extra_cmd_len
-// 						  ) == FAILURE) {
-// 		RETVAL_FALSE;
-// 		return (1);
-// 	}
-// 
-// 	if (headers_len > 0 && headers &&
-// 		(strstr(headers, "\n\n") || strstr(headers, "\n\r\n") /* double newline */
-// 			|| *headers == '\n' || (headers[0] == '\r' && headers[1] == '\n') /* starts with newline */
-// 	)) {
-// 		suhosin_log(S_MAIL, "mail() - double newline in headers, possible injection, mail dropped");
-// 		if (!SUHOSIN7_G(simulation)) {
-// 			RETVAL_FALSE;
-// 			return (1);
-// 		}
-// 	}
-// 
-// 	/* check for spam attempts with buggy webforms */
-// 	if (to_len > 0 && to) {
-// 		do {
-// 			if ((tmp = strchr(to, '\n')) == NULL)
-// 				tmp = strchr(to, '\r');
-// 			if (tmp == NULL) break;
-// 			to = tmp + 1;
-// 			if (!isspace(*to)) break;
-// 		} while (1);
-// 		if (tmp != NULL) {
-// 			suhosin_log(S_MAIL, "mail() - newline in To header, possible injection, mail dropped");
-// 			if (!SUHOSIN7_G(simulation)) {
-// 				RETVAL_FALSE;
-// 				return (1);
-// 			}
-// 		}
-// 	}
-// 
-// 	if (subject_len > 0 && subject) {
-// 		do {
-// 			if ((tmp = strchr(subject, '\n')) == NULL)
-// 				tmp = strchr(subject, '\r');
-// 			if (tmp == NULL) break;
-// 			subject = tmp + 1;
-// 			if (!isspace(*subject)) break;
-// 		} while (1);
-// 		if (tmp != NULL) {
-// 			suhosin_log(S_MAIL, "mail() - newline in Subject header, possible injection, mail dropped");
-// 			if (!SUHOSIN7_G(simulation)) {
-// 				RETVAL_FALSE;
-// 				return (1);
-// 			}
-// 		}
-// 	}
-// 		
-// 	if (SUHOSIN7_G(mailprotect) > 1) {
-// 		/* search for to, cc or bcc headers */
-// 		if (headers_len > 0 && headers != NULL) {
-// 			if (strncasecmp(headers, "to:", sizeof("to:") - 1) == 0 || suhosin_strcasestr(headers, "\nto:")) {
-// 				suhosin_log(S_MAIL, "mail() - To: headers aren't allowed in the headers parameter.");
-// 				if (!SUHOSIN7_G(simulation)) {
-// 					RETVAL_FALSE;
-// 					return (1);
-// 				}
-// 			}
-// 			
-// 			if (strncasecmp(headers, "cc:", sizeof("cc:") - 1) == 0 || suhosin_strcasestr(headers, "\ncc:")) {
-// 				suhosin_log(S_MAIL, "mail() - CC: headers aren't allowed in the headers parameter.");
-// 				if (!SUHOSIN7_G(simulation)) {
-// 					RETVAL_FALSE;
-// 					return (1);
-// 				}
-// 			}
-// 
-// 			if (strncasecmp(headers, "bcc:", sizeof("bcc:") - 1) == 0 || suhosin_strcasestr(headers, "\nbcc:")) {
-// 				suhosin_log(S_MAIL, "mail() - BCC: headers aren't allowed in the headers parameter.");
-// 				if (!SUHOSIN7_G(simulation)) {
-// 					RETVAL_FALSE;
-// 					return (1);
-// 				}
-// 			}
-// 		}
-// 	}
-// 
-// 	return (0);
-// }
-
-// #define SQLSTATE_SQL        0
-// #define SQLSTATE_IDENTIFIER 1
-// #define SQLSTATE_STRING     2
-// #define SQLSTATE_COMMENT    3
-// #define SQLSTATE_MLCOMMENT  4
-// 
-// int ih_querycheck(IH_HANDLER_PARAMS)
-// {
-// 	void **p = zend_vm_stack_top() - 1;
-// 	unsigned long arg_count;
-// 	zval **arg;
-// 	char *query, *s, *e;
-// 	zval *backup;
-// 	int len;
-// 	char quote;
-// 	int state = SQLSTATE_SQL;
-// 	int cnt_union = 0, cnt_select = 0, cnt_comment = 0, cnt_opencomment = 0;
-// 	int mysql_extension = 0;
-// 
-// 	
-// 	SDEBUG("function: %s", ih->name);
-// 	arg_count = (unsigned long) *p;
-// 
-// 	if (ht < (long) ih->arg1) {
-// 		return (0);
-// 	}
-//     
-// 	if ((long) ih->arg2) {
-//     	    mysql_extension = 1;
-// 	}
-// 	
-// 	arg = (zval **) p - (arg_count - (long) ih->arg1 + 1); /* count from 0 */
-// 
-// 	backup = *arg;
-// 	if (Z_TYPE_P(backup) != IS_STRING) {
-// 		return (0);
-// 	}
-// 	len = Z_STRLEN_P(backup);
-// 	query = Z_STRVAL_P(backup);
-// 	SDEBUG("SQL |%s|", query);
-// 	
-// 	s = query;
-// 	e = s+len;
-// 	
-// 	while (s < e) {
-// 	    switch (state)
-// 	    {
-//     		case SQLSTATE_SQL:
-//     		    switch (s[0])
-//     		    {
-//         		case '`':
-//         		    state = SQLSTATE_IDENTIFIER;
-//         		    quote = '`';
-//         		    break;
-//         		case '\'':
-//         		case '"':
-//         		    state = SQLSTATE_STRING;
-//         		    quote = *s;
-//         		    break;
-//         		case '/':
-//         		    if (s[1]=='*') {
-//                         if (mysql_extension == 1 && s[2] == '!') {
-//                             s += 2;
-//                             break;
-//                         }
-//             			s++;
-//             			state = SQLSTATE_MLCOMMENT;
-//         			    cnt_comment++;
-//         		    }
-//         		    break;
-//     			case '-':
-//         		    if (s[1]=='-') {
-//         			s++;
-//         			state = SQLSTATE_COMMENT;
-//         			cnt_comment++;
-//         		    }
-//         		    break;
-//     			case '#':
-//         		    state = SQLSTATE_COMMENT;
-//         		    cnt_comment++;
-//         		    break;
-//         		case 'u':
-//     			case 'U':
-//         		    if (strncasecmp("union", s, 5)==0) {
-//             			s += 4;
-//         			cnt_union++;
-//         		    }
-//         		    break;
-//     			case 's':
-//     			case 'S':
-//         		    if (strncasecmp("select", s, 6)==0) {
-//             			s += 5;
-//         			cnt_select++;
-//         		    }
-//         		    break;
-//     		    }
-//     		    break;
-//     		case SQLSTATE_STRING:
-// 		case SQLSTATE_IDENTIFIER:
-//     		    if (s[0] == quote) {
-//         		if (s[1] == quote) {
-//         		    s++;
-//     			} else {
-//         		    state = SQLSTATE_SQL;
-//     			}
-//     		    }
-//     		    if (s[0] == '\\') {
-//     			s++;
-//     		    }
-//     		    break;
-// 		case SQLSTATE_COMMENT:
-//     		    while (s[0] && s[0] != '\n') {
-//     			s++;        
-//     		    }
-//     		    state = SQLSTATE_SQL;
-//     		    break;
-//     		case SQLSTATE_MLCOMMENT:
-//     		    while (s[0] && (s[0] != '*' || s[1] != '/')) {
-//     			s++;
-//     		    }
-//     		    if (s[0]) {
-//     			state = SQLSTATE_SQL;
-//     		    }
-//     		    break;
-// 	    }
-// 	    s++;
-// 	}
-// 	if (state == SQLSTATE_MLCOMMENT) {
-// 	    cnt_opencomment = 1;
-// 	}
-// 	
-// 	if (cnt_opencomment && SUHOSIN7_G(sql_opencomment)>0) {
-// 	    suhosin_log(S_SQL, "Open comment in SQL query: '%*s'", len, query);
-// 	    if (SUHOSIN7_G(sql_opencomment)>1) {
-// 		suhosin_bailout();
-// 	    }
-// 	}
-// 	
-// 	if (cnt_comment && SUHOSIN7_G(sql_comment)>0) {
-// 	    suhosin_log(S_SQL, "Comment in SQL query: '%*s'", len, query);
-// 	    if (SUHOSIN7_G(sql_comment)>1) {
-// 		suhosin_bailout();
-// 	    }
-// 	}
-// 
-// 	if (cnt_union && SUHOSIN7_G(sql_union)>0) {
-// 	    suhosin_log(S_SQL, "UNION in SQL query: '%*s'", len, query);
-// 	    if (SUHOSIN7_G(sql_union)>1) {
-// 		suhosin_bailout();
-// 	    }
-// 	}
-// 
-// 	if (cnt_select>1 && SUHOSIN7_G(sql_mselect)>0) {
-// 	    suhosin_log(S_SQL, "Multiple SELECT in SQL query: '%*s'", len, query);
-// 	    if (SUHOSIN7_G(sql_mselect)>1) {
-// 		suhosin_bailout();
-// 	    }
-// 	}
-//     
-// 	return (0);
-// }
-// 
-// 
-// int ih_fixusername(IH_HANDLER_PARAMS)
-// {
-// 	void **p = zend_vm_stack_top() - 1;
-// 	unsigned long arg_count;
-// 	zval **arg;
-// 	char *prefix, *postfix, *user, *user_match, *cp;
-// 	zval *backup, *my_user;
-// 	int prefix_len, postfix_len, len;
-// 	
-// 	SDEBUG("function (fixusername): %s", ih->name);
-// 	
-// 	prefix = SUHOSIN7_G(sql_user_prefix);
-// 	postfix = SUHOSIN7_G(sql_user_postfix);
-// 	user_match = SUHOSIN7_G(sql_user_match);
-// 	
-// 	arg_count = (unsigned long) *p;
-// 
-// 	if (ht < (long) ih->arg1) {
-// 		return (0);
-// 	}
-// 	
-// 	arg = (zval **) p - (arg_count - (long) ih->arg1 + 1); /* count from 0 */
-// 
-// 	backup = *arg;
-// 	if (Z_TYPE_P(backup) != IS_STRING) {
-// 		user = "";
-// 		len = 0;
-// 	} else {
-// 		len = Z_STRLEN_P(backup);
-// 		user = Z_STRVAL_P(backup);
-// 	}
-// 
-// 	cp = user;
-// 	while (cp < user+len) {
-// 		if (*cp < 32) {
-// 			suhosin_log(S_SQL, "SQL username contains invalid characters");
-// 			if (!SUHOSIN7_G(simulation)) {
-// 				RETVAL_FALSE;
-// 				return (1);
-// 			}
-// 			break;
-// 		}
-// 		cp++;
-// 	}
-// 
-// 	if ((prefix != NULL && prefix[0]) || (postfix != NULL && postfix[0])) {
-// 		if (prefix == NULL) {
-// 			prefix = "";
-// 		}
-// 		if (postfix == NULL) {
-// 			postfix = "";
-// 		}
-// 		prefix_len = strlen(prefix);
-// 		postfix_len = strlen(postfix);
-// 		
-// 		MAKE_STD_ZVAL(my_user);
-// 		my_user->type = IS_STRING;
-// 		my_user->value.str.len = spprintf(&my_user->value.str.val, 0, "%s%s%s", prefix, user, postfix);
-// 	
-// 		/* XXX: memory_leak? */
-// 		*arg = my_user;	
-// 		
-// 		len = Z_STRLEN_P(my_user);
-// 		user = Z_STRVAL_P(my_user);
-// 	}
-// 	
-// 	if (user_match && user_match[0]) {
-// #ifdef HAVE_FNMATCH
-// 		if (fnmatch(user_match, user, 0) != 0) {
-// 			suhosin_log(S_SQL, "SQL username ('%s') does not match suhosin.sql.user_match ('%s')", user, user_match);
-// 			if (!SUHOSIN7_G(simulation)) {
-// 				RETVAL_FALSE;
-// 				return (1);
-// 			}
-// 		}
-// #else
-// #warning no support for fnmatch() - setting suhosin.sql.user_match will always fail.
-// 		suhosin_log(S_SQL, "suhosin.sql.user_match specified, but system does not support fnmatch()");
-// 		if (!SUHOSIN7_G(simulation)) {
-// 			RETVAL_FALSE;
-// 			return (1);
-// 		}
-// #endif
-// 	}
-// 	
-// 	SDEBUG("function: %s - user: %s", ih->name, user);
-// 
-// 	return (0);
-// }
-// 
-// 
-// static int ih_function_exists(IH_HANDLER_PARAMS)
-// {
-// 	zval **function_name;
-// 	zend_function *func;
-// 	char *lcname;
-// 	zend_bool retval;
-// 	int func_name_len;
-// 	
-// 	if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &function_name)==FAILURE) {
-// 		ZEND_WRONG_PARAM_COUNT_WITH_RETVAL(1);
-// 	}
-// 	convert_to_string_ex(function_name);
-// 	func_name_len = Z_STRLEN_PP(function_name);
-// 	lcname = estrndup(Z_STRVAL_PP(function_name), func_name_len);	
-// 	zend_str_tolower(lcname, func_name_len);
-// 
-// 	retval = (zend_hash_find(EG(function_table), lcname, func_name_len+1, (void **)&func) == SUCCESS);
-// 	
-// 	/*
-// 	 * A bit of a hack, but not a bad one: we see if the handler of the function
-// 	 * is actually one that displays "function is disabled" message.
-// 	 */
-// 	if (retval && func->type == ZEND_INTERNAL_FUNCTION &&
-// 		func->internal_function.handler == zif_display_disabled_function) {
-// 		retval = 0;
-// 	}
-// 
-// 	/* Now check if function is forbidden by Suhosin */
-// 	if (SUHOSIN7_G(in_code_type) == SUHOSIN_EVAL) {
-// 		if (SUHOSIN7_G(eval_whitelist) != NULL) {
-// 			if (!zend_hash_exists(SUHOSIN7_G(eval_whitelist), lcname, func_name_len+1)) {
-// 			    retval = 0;
-// 			}
-// 		} else if (SUHOSIN7_G(eval_blacklist) != NULL) {
-// 			if (zend_hash_exists(SUHOSIN7_G(eval_blacklist), lcname, func_name_len+1)) {
-// 			    retval = 0;
-// 			}
-// 		}
-// 	}
-// 	
-// 	if (SUHOSIN7_G(func_whitelist) != NULL) {
-// 		if (!zend_hash_exists(SUHOSIN7_G(func_whitelist), lcname, func_name_len+1)) {
-// 		    retval = 0;
-// 		}
-// 	} else if (SUHOSIN7_G(func_blacklist) != NULL) {
-// 		if (zend_hash_exists(SUHOSIN7_G(func_blacklist), lcname, func_name_len+1)) {
-// 		    retval = 0;
-// 		}
-// 	}
-// 
-// 	efree(lcname);
-// 
-// 	RETVAL_BOOL(retval);
-// 	return (1);
-// }
-
-// #include "execute_rnd.inc.c"
-
-internal_function_handler ihandlers[] = {
 	// { "preg_replace", ih_preg_replace, NULL, NULL, NULL },
 	// { "mail", ih_mail, NULL, NULL, NULL },
 	// { "symlink", ih_symlink, NULL, NULL, NULL },
@@ -1139,7 +662,7 @@ internal_function_handler ihandlers[] = {
 	// { "mysql_db_query", ih_querycheck, (void *)2, (void *)1, NULL },
 	// { "mysql_unbuffered_query", ih_querycheck, (void *)1, (void *)1, NULL },
 	
-#ifdef SUHOSIN_EXPERIMENTAL
+#ifdef SUHOSIN7_EXPERIMENTAL
 	/* MaxDB */
 	// { "maxdb::maxdb", ih_fixusername, (void *)2, NULL, NULL },
 	// { "maxdb_connect", ih_fixusername, (void *)2, NULL, NULL },
@@ -1198,8 +721,8 @@ internal_function_handler ihandlers[] = {
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 
-#define FUNCTION_WARNING() zend_error(E_WARNING, "%s() has been disabled for security reasons", suhosin_get_active_function_name());
-#define FUNCTION_SIMULATE_WARNING() zend_error(E_WARNING, "SIMULATION - %s() has been disabled for security reasons", suhosin_get_active_function_name());
+#define FUNCTION_WARNING(fname) zend_error(E_WARNING, "%s() has been disabled for security reasons", (fname));
+#define FUNCTION_SIMULATE_WARNING(fname) zend_error(E_WARNING, "SIMULATION - %s() has been disabled for security reasons", (fname));
 
 /* {{{ void suhosin_execute_internal
  *    This function provides a hook for internal execution */
@@ -1208,10 +731,28 @@ internal_function_handler ihandlers[] = {
 
 ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, zval *return_value)
 {
+	if (execute_data == NULL) {
+		// if (EG(current_execute_data) != NULL) {
+		// 	execute_data = EG(current_execute_data);
+		// }
+		suhosin_log(S_EXECUTOR|S_GETCALLER, "execution without data. something is wrong.");
+		suhosin_bailout();
+		return;
+	}
+	
+	zend_function *func = execute_data->func;
+	if (func == NULL) {
+		suhosin_log(S_EXECUTOR|S_GETCALLER, "execution without function context. something is wrong.");
+		suhosin_bailout();
+	}
+	
+	
 	// zval *return_value;
 	// zval **return_value_ptr;
 	// zval *this_ptr;
 	int ht = 0;
+	int retval = SUCCESS;
+
 	
 	// if (fci) {
 	// 	return_value = *fci->retval_ptr_ptr;
@@ -1249,32 +790,35 @@ ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, z
 	// 	zend_str_tolower(lcname, function_name_strlen);
 	// }
 
-	// TODO: check execute_data + ->func
-
-	zend_string *function_name = execute_data->func->op_array.function_name;
-	
-	// TODO: check for function_name == NULL
-	
-	SDEBUG("function: %s", ZSTR_VAL(function_name));
+	zend_string *function_name = func->common.function_name;
+	if (function_name == NULL) {
+		function_name = func->op_array.function_name;
+	}
+	if (function_name == NULL) {
+		// no function name -> skip whitelists/blacklists
+		goto execute_internal_continue;
+	}
+		
+	SDEBUG("function: [%s]/%zu", ZSTR_VAL(function_name), ZSTR_LEN(function_name)) ;
 
 	if (SUHOSIN7_G(in_code_type) == SUHOSIN_EVAL) {
 	
 		if (SUHOSIN7_G(eval_whitelist) != NULL) {
 			if (!zend_hash_exists(SUHOSIN7_G(eval_whitelist), function_name)) {
-				suhosin_log(S_EXECUTOR|S_GETCALLER, "function outside of eval whitelist called: %s()", ZSTR_VAL(function_name));
+				suhosin_log(S_EXECUTOR|S_GETCALLER, "eval'd function not whitelisted: %s()", ZSTR_VAL(function_name));
 				if (!SUHOSIN7_G(simulation)) {
 				        goto execute_internal_bailout;
 				} else {
-					FUNCTION_SIMULATE_WARNING()
+					FUNCTION_SIMULATE_WARNING(ZSTR_VAL(function_name))
 				}
 			}
 		} else if (SUHOSIN7_G(eval_blacklist) != NULL) {
 			if (zend_hash_exists(SUHOSIN7_G(eval_blacklist), function_name)) {
-				suhosin_log(S_EXECUTOR|S_GETCALLER, "function within eval blacklist called: %s()", ZSTR_VAL(function_name));
+				suhosin_log(S_EXECUTOR|S_GETCALLER, "eval'd function blacklisted: %s()", ZSTR_VAL(function_name));
 				if (!SUHOSIN7_G(simulation)) {
 				        goto execute_internal_bailout;
 				} else {
-					FUNCTION_SIMULATE_WARNING()
+					FUNCTION_SIMULATE_WARNING(ZSTR_VAL(function_name))
 				}
 			}
 		}
@@ -1282,49 +826,51 @@ ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, z
 	
 	if (SUHOSIN7_G(func_whitelist) != NULL) {
 		if (!zend_hash_exists(SUHOSIN7_G(func_whitelist), function_name)) {
-			suhosin_log(S_EXECUTOR|S_GETCALLER, "function outside of whitelist called: %s()", ZSTR_VAL(function_name));
+			suhosin_log(S_EXECUTOR|S_GETCALLER, "function not whitelisted: %s()", ZSTR_VAL(function_name));
 			if (!SUHOSIN7_G(simulation)) {
 				goto execute_internal_bailout;
 			} else {
-				FUNCTION_SIMULATE_WARNING()
+				FUNCTION_SIMULATE_WARNING(ZSTR_VAL(function_name))
 			}
 		}
 	} else if (SUHOSIN7_G(func_blacklist) != NULL) {
 		if (zend_hash_exists(SUHOSIN7_G(func_blacklist), function_name)) {
-			suhosin_log(S_EXECUTOR|S_GETCALLER, "function within blacklist called: %s()", ZSTR_VAL(function_name));
+			suhosin_log(S_EXECUTOR|S_GETCALLER, "function blacklisted: %s()", ZSTR_VAL(function_name));
 			if (!SUHOSIN7_G(simulation)) {
 				goto execute_internal_bailout;
 			} else {
-				FUNCTION_SIMULATE_WARNING()
+				FUNCTION_SIMULATE_WARNING(ZSTR_VAL(function_name))
 			}
 		}
 	}
 	
-	internal_function_handler *ih;
-	int retval = 0;
+	suhosin_internal_function_handler *ih;
+	// SDEBUG("before %d", zend_hash_exists(&ihandler_table, function_name));
 	if ((ih = zend_hash_find_ptr(&ihandler_table, function_name))) {
-	
+	// SDEBUG("AFTER");
 		void *handler = execute_data->func->internal_function.handler;
 		
 		if (handler != ZEND_FN(display_disabled_function)) {
-		    retval = ih->handler(IH_HANDLER_PARAM_PASSTHRU);
+			retval = ih->handler(S7_IH_HANDLER_PARAM_PASSTHRU);
 		}
 		
 	}
+
+execute_internal_continue:
 	
-	if (retval == 0) {
+	if (retval == SUCCESS) {
 		old_execute_internal(execute_data, return_value);
 	}
 
-	// if (free_lcname == 1) {
-	// 	efree(lcname);
-	// }
 	return;
+
 execute_internal_bailout:
-	// if (free_lcname == 1) {
-	// 	efree(lcname);
-	// }
-	FUNCTION_WARNING()
+
+	if (function_name != NULL) {
+		FUNCTION_WARNING(ZSTR_VAL(function_name))
+	} else {
+		FUNCTION_WARNING("<unknown>");
+	}
 	suhosin_bailout();
 }
 /* }}} */
@@ -1332,20 +878,20 @@ execute_internal_bailout:
 
 /* {{{ int function_lookup(zend_extension *extension)
  */
-static int function_lookup(zend_extension *extension)
-{
-	// if (zo_set_oe_ex != NULL) {
-	// 	return ZEND_HASH_APPLY_STOP;
-	// }
-
-	// if (extension->handle != NULL) {
-	// 
-	// 	zo_set_oe_ex = (void *)DL_FETCH_SYMBOL(extension->handle, "zend_optimizer_set_oe_ex");
-    // 
-    // }
-
-	return 0;
-}
+// static int function_lookup(zend_extension *extension)
+// {
+// 	if (zo_set_oe_ex != NULL) {
+// 		return ZEND_HASH_APPLY_STOP;
+// 	}
+// 
+// 	if (extension->handle != NULL) {
+// 	
+// 		zo_set_oe_ex = (void *)DL_FETCH_SYMBOL(extension->handle, "zend_optimizer_set_oe_ex");
+// 	
+// 	}
+// 
+// 	return 0;
+// }
 /* }}} */
 
 
@@ -1353,26 +899,24 @@ static int function_lookup(zend_extension *extension)
  */
 void suhosin_hook_execute()
 {
-	internal_function_handler *ih;
-
 	old_execute_ex = zend_execute_ex;
 	zend_execute_ex = suhosin_execute_ex;
 	
 /*	old_compile_file = zend_compile_file;
 	zend_compile_file = suhosin_compile_file; */
 
-#if ZO_COMPATIBILITY_HACK_TEMPORARY_DISABLED
-	if (zo_set_oe_ex == NULL) {	
-		zo_set_oe_ex = (void *)DL_FETCH_SYMBOL(NULL, "zend_optimizer_set_oe_ex");
-	}
-	if (zo_set_oe_ex == NULL) {	
-		zend_llist_apply(&zend_extensions, (llist_apply_func_t)function_lookup);
-	}
-
-	if (zo_set_oe_ex != NULL) {
-		old_execute_ZO = zo_set_oe_ex(suhosin_execute_ZO);
-	}
-#endif
+// #if ZO_COMPATIBILITY_HACK_TEMPORARY_DISABLED
+// 	if (zo_set_oe_ex == NULL) {	
+// 		zo_set_oe_ex = (void *)DL_FETCH_SYMBOL(NULL, "zend_optimizer_set_oe_ex");
+// 	}
+// 	if (zo_set_oe_ex == NULL) {	
+// 		zend_llist_apply(&zend_extensions, (llist_apply_func_t)function_lookup);
+// 	}
+// 
+// 	if (zo_set_oe_ex != NULL) {
+// 		old_execute_ZO = zo_set_oe_ex(suhosin_execute_ZO);
+// 	}
+// #endif
 	
 	old_execute_internal = zend_execute_internal;
 	if (old_execute_internal == NULL) {
@@ -1382,9 +926,11 @@ void suhosin_hook_execute()
 	
 	/* register internal function handlers */
 	zend_hash_init(&ihandler_table, 16, NULL, NULL, 1);
-	ih = &ihandlers[0];
+	suhosin_internal_function_handler *ih = &ihandlers[0];
 	while (ih->name) {
-		zend_hash_str_add_ptr(&ihandler_table, ih->name, sizeof(ih->name)-1, ih);
+		// SDEBUG("adding [%s]/%zu", ih->name, strlen(ih->name));
+		// zend_hash_str_add_ptr(&ihandler_table, ZEND_STRL(ih->name), ih);
+		zend_hash_str_add_ptr(&ihandler_table, ih->name, strlen(ih->name), ih);
 		ih++;
 	}
 		
@@ -1403,11 +949,11 @@ void suhosin_hook_execute()
  */
 void suhosin_unhook_execute()
 {
-#if ZO_COMPATIBILITY_HACK_TEMPORARY_DISABLED
-	if (zo_set_oe_ex) {
-		zo_set_oe_ex(old_execute_ZO);
-	}
-#endif
+// #if ZO_COMPATIBILITY_HACK_TEMPORARY_DISABLED
+// 	if (zo_set_oe_ex) {
+// 		zo_set_oe_ex(old_execute_ZO);
+// 	}
+// #endif
 
 	zend_execute_ex = old_execute_ex;
 		
