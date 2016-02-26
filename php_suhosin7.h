@@ -411,6 +411,13 @@ static inline char *suhosin_get_active_function_name() {
 	return fn;
 }
 
+#ifdef SUHOSIN_STRCASESTR
+char *suhosin_strcasestr(char *haystack, char *needle)
+#else
+#define suhosin_strcasestr(a, b) strcasestr(a, b)
+#endif
+
+/* {{{ suhosin_strcasestr */
 
 
 /*

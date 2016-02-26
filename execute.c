@@ -39,16 +39,16 @@
 
 // #include "sha256.h"
 
-#ifdef PHP_WIN32
+// #ifdef PHP_WIN32
 // # include "win32/fnmatch.h"
-# include "win32/winutil.h"
-# include "win32/time.h"
-#else
+// # include "win32/winutil.h"
+// # include "win32/time.h"
+// #else
 // # ifdef HAVE_FNMATCH
 // #  include <fnmatch.h>
 // # endif
-# include <sys/time.h>
-#endif
+// # include <sys/time.h>
+// #endif
 
 ZEND_API static void (*old_execute_ex)(zend_execute_data *execute_data);
 ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data);
@@ -63,8 +63,9 @@ ZEND_API static void suhosin_execute(zend_op_array *op_array, zval *return_value
 
 // extern zend_extension suhosin_zend_extension_entry;
 
+#ifdef SUHOSIN_STRCASESTR
 /* {{{ suhosin_strcasestr */
-static char *suhosin_strcasestr(char *haystack, char *needle)
+char *suhosin_strcasestr(char *haystack, char *needle)
 {
 	unsigned char *t, *h, *n;
 	h = (unsigned char *) haystack;
@@ -82,7 +83,33 @@ conts:
 	return (NULL);
 }
 /* }}} */
+#endif
 
+static int match_include_list(HashTable *ht, char *s, size_t slen)
+{
+	char *h = strstr(s, "://");
+	char *h2 = suhosin_strcasestr(s, "data:");
+	h2 = h2 == NULL ? NULL : h2 + 4;
+	char *t = h = (h == NULL) ? h2 : ( (h2 == NULL) ? h : ( (h <= h2) ? h : h2 ) );
+	if (h == NULL) return -1; // no URL
+	
+	while (t > s && (isalnum(t[-1]) || t[-1]=='_' || t[-1]=='.')) {
+		t--;
+	}
+	
+	size_t tlen = slen - (t - s);
+	
+	zend_ulong num_key;
+	zend_string *key;
+	ZEND_HASH_FOREACH_KEY(ht, num_key, key) {
+		if (tlen < ZSTR_LEN(key)) { continue; }
+		if (ZSTR_LEN(key) == 0) { continue; } // ignore empty list entries
+		if (strncasecmp(t, ZSTR_VAL(key), ZSTR_LEN(key)) == 0) {
+			return 1;
+		}
+	} ZEND_HASH_FOREACH_END();
+	return 0;
+}
 
 #define SUHOSIN_CODE_TYPE_UNKNOWN	0
 #define SUHOSIN_CODE_TYPE_COMMANDLINE	1
@@ -102,137 +129,65 @@ conts:
 #define SUHOSIN_CODE_TYPE_WRITABLE  15
 #define SUHOSIN_CODE_TYPE_MBREGEXP	16
 
-static int suhosin_check_filename(char *s, int len)
+static int suhosin_check_filename(char *s, int slen)
 {
-	char fname[MAXPATHLEN+1];
-	char *t, *h, *h2, *index, *e;
-	int tlen, i, count=0;
-	uint indexlen;
-	ulong numindex;
-	zend_bool isOk;
-
 	/* check if filename is too long */
-	if (len > MAXPATHLEN) {
+	if (slen > MAXPATHLEN) {
 		return SUHOSIN_CODE_TYPE_LONGNAME;
 	}
-	memcpy(fname, s, len);
-	fname[len] = 0; 
-	s = (char *)&fname;
-	e = s + len;
+
+	char fname[MAXPATHLEN+1];
+
+	memcpy(fname, s, slen);
+	fname[slen] = 0; 
+	s = (char *)fname;
+	char *e = s + slen;
 
 	/* check if ASCIIZ attack */
-	if (len != strlen(s)) {
+	if (slen != strlen(s)) {
 		return SUHOSIN_CODE_TYPE_0FILE;
 	}
 	
+	SDEBUG("fn=%s", s);
 	/* disallow uploaded files */
 	if (SG(rfc1867_uploaded_files)) {
-		if (zend_hash_str_exists(SG(rfc1867_uploaded_files), (char *) s, e-s+1)) { // <--- TODO: range check
+		if (zend_hash_str_exists(SG(rfc1867_uploaded_files), s, slen)) { // <--- TODO: range check
 			return SUHOSIN_CODE_TYPE_UPLOADED;
 		}
 	}
 		
 	/* count number of directory traversals */
-	for (i=0; i < len-3; i++) {
-		if (s[i] == '.' && s[i+1] == '.' && (s[i+2] == '/' || s[i+2] == '\\')) {
-			count++;
-			i+=2;
+	int traversal_conut = 0;
+	for (int i = 0; i < slen-3; i++) {
+		if (s[i] == '.' && s[i+1] == '.' && IS_SLASH(s[i+2])) {
+			traversal_conut++;
+			i += 2;
 		}
 	}
-	if (SUHOSIN7_G(executor_include_max_traversal) && SUHOSIN7_G(executor_include_max_traversal)<=count) {
+	if (SUHOSIN7_G(executor_include_max_traversal) && traversal_conut > SUHOSIN7_G(executor_include_max_traversal)) {
 		return SUHOSIN_CODE_TYPE_MANYDOTS;
 	}
 	
-	SDEBUG("xxx %p %p",SUHOSIN7_G(include_whitelist),SUHOSIN7_G(include_blacklist));
+	SDEBUG("include wl=%p bl=%p", SUHOSIN7_G(include_whitelist), SUHOSIN7_G(include_blacklist));
 	/* no black or whitelist then disallow all */
-	if (SUHOSIN7_G(include_whitelist)==NULL && SUHOSIN7_G(include_blacklist)==NULL) {
+	if (SUHOSIN7_G(include_whitelist) == NULL && SUHOSIN7_G(include_blacklist) == NULL) {
 		/* disallow all URLs */
 		if (strstr(s, "://") != NULL || suhosin_strcasestr(s, "data:") != NULL) {
 			return SUHOSIN_CODE_TYPE_BADURL;
 		}
-	} else 
-	/* whitelist is stronger than blacklist */
-	// if (SUHOSIN7_G(include_whitelist)) {
-	// 	
-	// 	do {
-	// 		isOk = 0;
-	// 		
-	// 		h = strstr(s, "://");
-	// 		h2 = suhosin_strcasestr(s, "data:");
-	// 		h2 = h2 == NULL ? NULL : h2 + 4;
-	// 		t = h = (h == NULL) ? h2 : ( (h2 == NULL) ? h : ( (h < h2) ? h : h2 ) );
-	// 		if (h == NULL) break;
-	// 						
-	// 		while (t > s && (isalnum(t[-1]) || t[-1]=='_' || t[-1]=='.')) {
-	// 			t--;
-	// 		}
-	// 		
-	// 		tlen = e-t;
-	// 		
-	// 		zend_hash_internal_pointer_reset(SUHOSIN7_G(include_whitelist));
-	// 		do {
-	// 			int r = zend_hash_get_current_key_ex(SUHOSIN7_G(include_whitelist), &index, &indexlen, &numindex, 0, NULL);
-	// 			
-	// 			if (r==HASH_KEY_NON_EXISTANT) {
-	// 				break;
-	// 			}
-	// 			if (r==HASH_KEY_IS_STRING) {
-	// 				if (h-t <= indexlen-1 && tlen>=indexlen-1) {
-	// 					if (strncasecmp(t, index, indexlen-1)==0) {
-	// 						isOk = 1;
-	// 						break;
-	// 					}
-	// 				}
-	// 			}
-	// 			
-	// 			zend_hash_move_forward(SUHOSIN7_G(include_whitelist));
-	// 		} while (1);
-	// 		
-	// 		/* not found in whitelist */
-	// 		if (!isOk) {
-	// 			return SUHOSIN_CODE_TYPE_BADURL;
-	// 		}
-	// 		
-	// 		s = h + 1;
-	// 	} while (1);
-	// } else {
-	// 	
-	// 	do {
-	// 		int tlen;
-	// 		
-	// 		h = strstr(s, "://");
-	// 		h2 = suhosin_strcasestr(s, "data:");
-	// 		h2 = h2 == NULL ? NULL : h2 + 4;
-	// 		t = h = (h == NULL) ? h2 : ( (h2 == NULL) ? h : ( (h < h2) ? h : h2 ) );
-	// 		if (h == NULL) break;
-	// 						
-	// 		while (t > s && (isalnum(t[-1]) || t[-1]=='_' || t[-1]=='.')) {
-	// 			t--;
-	// 		}
-	// 
-	// 		tlen = e-t;
-	// 
-	// 		zend_hash_internal_pointer_reset(SUHOSIN7_G(include_blacklist));
-	// 		do {
-	// 			int r = zend_hash_get_current_key_ex(SUHOSIN7_G(include_blacklist), &index, &indexlen, &numindex, 0, NULL);
-	// 
-	// 			if (r==HASH_KEY_NON_EXISTANT) {
-	// 				break;
-	// 			}
-	// 			if (r==HASH_KEY_IS_STRING) {
-	// 				if (h-t <= indexlen-1 && tlen>=indexlen-1) {
-	// 					if (strncasecmp(t, index, indexlen-1)==0) {
-	// 						return SUHOSIN_CODE_TYPE_BLACKURL;
-	// 					}
-	// 				}
-	// 			}
-	// 			
-	// 			zend_hash_move_forward(SUHOSIN7_G(include_blacklist));
-	// 		} while (1);
-	// 		
-	// 		s = h + 1;
-	// 	} while (1);
-	// }
+	} else {
+		if (SUHOSIN7_G(include_whitelist) != NULL) {
+			if (match_include_list(SUHOSIN7_G(include_whitelist), s, slen) == 0) {
+				return SUHOSIN_CODE_TYPE_BADURL;
+			}
+		} else if (SUHOSIN7_G(include_blacklist) != NULL) {
+			if (match_include_list(SUHOSIN7_G(include_blacklist), s, slen) == 1) {
+				return SUHOSIN_CODE_TYPE_BLACKURL;
+			}
+		}
+	}
+	
+check_filename_skip_lists:
 
 	/* disallow writable files */
 	if (!SUHOSIN7_G(executor_include_allow_writable_files)) {
@@ -247,57 +202,116 @@ static int suhosin_check_filename(char *s, int len)
 }
 
 
-// ZEND_API static int (*old_zend_stream_open)(const char *filename, zend_file_handle *handle);
+static void suhosin_check_codetype(zend_ulong code_type, char *filename)
+{
+	switch (code_type) {
+		case SUHOSIN_CODE_TYPE_EVAL:
+			if (SUHOSIN7_G(executor_disable_eval)) {
+				suhosin_log(S_EXECUTOR|S_GETCALLER, "use of eval is forbidden by configuration");
+				if (!SUHOSIN7_G(simulation)) {
+					zend_error(E_ERROR, "SUHOSIN - Use of eval is forbidden by configuration");
+				}
+			}
+			break;
+			
+		// case SUHOSIN_CODE_TYPE_REGEXP:
+		//     if (SUHOSIN7_G(executor_disable_emod)) {
+		// 	    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of preg_replace() with /e modifier is forbidden by configuration");
+		// 	    if (!SUHOSIN7_G(simulation)) {
+		// 		    zend_error(E_ERROR, "SUHOSIN - Use of preg_replace() with /e modifier is forbidden by configuration");
+		// 	    }
+		//     }
+		//     break;
+			
+		case SUHOSIN_CODE_TYPE_MBREGEXP:
+			if (SUHOSIN7_G(executor_disable_emod)) {
+				suhosin_log(S_EXECUTOR|S_GETCALLER, "use of /e modifier in replace function is forbidden by configuration");
+				if (!SUHOSIN7_G(simulation)) {
+					zend_error(E_ERROR, "SUHOSIN - Use of /e modifier in replace function is forbidden by configuration");
+				}
+			}
+			break;
+		
+		case SUHOSIN_CODE_TYPE_ASSERT:
+			break;
+		
+		case SUHOSIN_CODE_TYPE_CFUNC:
+			break;
+		
+		case SUHOSIN_CODE_TYPE_LONGNAME:
+			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename is too long: %s", filename);
+			suhosin_bailout();
+			break;
+
+		case SUHOSIN_CODE_TYPE_MANYDOTS:
+			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename contains too many '../': %s", filename);
+			suhosin_bailout();
+			break;
+		
+		case SUHOSIN_CODE_TYPE_UPLOADED:
+			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename is an uploaded file");
+			suhosin_bailout();
+			break;
+			
+		case SUHOSIN_CODE_TYPE_0FILE:
+			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename contains an ASCIIZ character");
+			suhosin_bailout();
+			break;
+			
+		case SUHOSIN_CODE_TYPE_WRITABLE:
+			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename is writable by PHP process: %s", filename);
+			suhosin_bailout();
+			break;		    	
+
+		case SUHOSIN_CODE_TYPE_BLACKURL:
+			suhosin_log(S_INCLUDE|S_GETCALLER, "Included URL is blacklisted: %s", filename);
+			suhosin_bailout();
+			break;
+			
+		case SUHOSIN_CODE_TYPE_BADURL:
+			suhosin_log(S_INCLUDE|S_GETCALLER, "Included URL is not allowed: %s", filename);
+			suhosin_bailout();
+			break;
+
+		case SUHOSIN_CODE_TYPE_BADFILE:
+// 		    cs.type = IS_STRING;
+// #define DIE_WITH_MSG "die('disallowed_file'.chr(10).chr(10));"
+// 		    cs.value.str.val = estrndup(DIE_WITH_MSG, sizeof(DIE_WITH_MSG)-1);
+// 		    cs.value.str.len = sizeof(DIE_WITH_MSG)-1;
+// 		    new_op_array = compile_string(&cs, "suhosin internal code");
+// 		    if (new_op_array) {
+// 				op_array = new_op_array;
+// 				goto continue_execution;
+// 		    }
+			suhosin_bailout();
+			break;
+
+		case SUHOSIN_CODE_TYPE_COMMANDLINE:
+		case SUHOSIN_CODE_TYPE_SUHOSIN:
+		case SUHOSIN_CODE_TYPE_UNKNOWN:
+		case SUHOSIN_CODE_TYPE_GOODFILE:
+			break;
+	}
+
+}
+
+ZEND_API static int (*old_zend_stream_open)(const char *filename, zend_file_handle *handle) = NULL;
+
 // 
-// static int suhosin_zend_stream_open(const char *filename, zend_file_handle *fh)
-// {
-// 	zend_execute_data *exd;
-// 	exd=EG(current_execute_data);
-// 	if (EG(in_execution) && (exd!=NULL) && (exd->opline != NULL) && (exd->opline->opcode == ZEND_INCLUDE_OR_EVAL)) {
-// 		int filetype = suhosin_check_filename((char *)filename, strlen(filename));
-// 		
-// 		switch (filetype) {
-// 		    case SUHOSIN_CODE_TYPE_LONGNAME:
-// 			suhosin_log(S_INCLUDE, "Include filename ('%s') is too long", filename);
-// 			suhosin_bailout();
-// 			break;
-// 
-// 		    case SUHOSIN_CODE_TYPE_UPLOADED:
-// 			suhosin_log(S_INCLUDE, "Include filename is an uploaded file");
-// 			suhosin_bailout();
-// 			break;
-// 		    
-// 		    case SUHOSIN_CODE_TYPE_0FILE:
-// 			suhosin_log(S_INCLUDE, "Include filename contains an ASCIIZ character");
-// 			suhosin_bailout();
-// 			break;
-// 		
-// 		    case SUHOSIN_CODE_TYPE_WRITABLE:
-// 			suhosin_log(S_INCLUDE, "Include filename ('%s') is writable by PHP process", filename);
-// 			suhosin_bailout();
-// 			break;		    	
-// 
-// 		    case SUHOSIN_CODE_TYPE_BLACKURL:
-// 			suhosin_log(S_INCLUDE, "Include filename ('%s') is a URL that is forbidden by the blacklist", filename);
-// 			suhosin_bailout();
-// 			break;
-// 			
-// 		    case SUHOSIN_CODE_TYPE_BADURL:
-// 			suhosin_log(S_INCLUDE, "Include filename ('%s') is a URL that is not allowed", filename);
-// 			suhosin_bailout();
-// 			break;
-// 
-// 		    case SUHOSIN_CODE_TYPE_MANYDOTS:
-// 			suhosin_log(S_INCLUDE, "Include filename ('%s') contains too many '../'", filename);
-// 			suhosin_bailout();
-// 			break;
-// 		}
-// 	}
-// 	return old_zend_stream_open(filename, fh);
-// }
+ZEND_API static int suhosin_zend_stream_open(const char *filename, zend_file_handle *handle)
+{
+	zend_execute_data *execute_data = EG(current_execute_data);
+	
+	if ((execute_data != NULL) && (execute_data->opline != NULL) && (execute_data->opline->opcode == ZEND_INCLUDE_OR_EVAL)) {
+		int filetype = suhosin_check_filename((char *)filename, strlen(filename));
+		suhosin_check_codetype(filetype, (char*)filename);
+	}
+
+	return old_zend_stream_open(filename, handle);
+}
 
 
-static int suhosin_detect_codetype(zend_op_array *op_array)
+static inline int suhosin_detect_codetype(zend_op_array *op_array)
 {
 	if (op_array->filename == NULL) {
 		return SUHOSIN_CODE_TYPE_UNKNOWN;
@@ -305,7 +319,7 @@ static int suhosin_detect_codetype(zend_op_array *op_array)
 
 	char *s = (char *)ZSTR_VAL(op_array->filename);
 
-	/* eval, assert, create_function, preg_replace  */
+	/* eval, assert, create_function, mb_ereg_replace  */
 	if (op_array->type == ZEND_EVAL_CODE) {
 	
 		if (s == NULL) {
@@ -365,8 +379,13 @@ static int suhosin_detect_codetype(zend_op_array *op_array)
  *    This function provides a hook for execution */
 ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 {
-	// SDEBUG("X------------------------->")
-	// TODO: check execute_data + execute_data->func
+	if (execute_data == NULL) {
+		return;
+	}
+	if (execute_data->func == NULL) {
+		old_execute_ex(execute_data);
+		return;
+	}
 	
 	zend_op_array *new_op_array;
 	int op_array_type;//, len;
@@ -509,98 +528,11 @@ not_evaled_code:
 */	
 
 	op_array_type = suhosin_detect_codetype(&execute_data->func->op_array);
-	
-	switch (op_array_type) {
-	    case SUHOSIN_CODE_TYPE_EVAL:
-		    if (SUHOSIN7_G(executor_disable_eval)) {
-			    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of eval is forbidden by configuration");
-			    if (!SUHOSIN7_G(simulation)) {
-				    zend_error(E_ERROR, "SUHOSIN - Use of eval is forbidden by configuration");
-			    }
-		    }
-		    break;
-		    
-	    // case SUHOSIN_CODE_TYPE_REGEXP:
-		//     if (SUHOSIN7_G(executor_disable_emod)) {
-		// 	    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of preg_replace() with /e modifier is forbidden by configuration");
-		// 	    if (!SUHOSIN7_G(simulation)) {
-		// 		    zend_error(E_ERROR, "SUHOSIN - Use of preg_replace() with /e modifier is forbidden by configuration");
-		// 	    }
-		//     }
-		//     break;
-		    
-		case SUHOSIN_CODE_TYPE_MBREGEXP:
-		    if (SUHOSIN7_G(executor_disable_emod)) {
-			    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of /e modifier in replace function is forbidden by configuration");
-			    if (!SUHOSIN7_G(simulation)) {
-				    zend_error(E_ERROR, "SUHOSIN - Use of /e modifier in replace function is forbidden by configuration");
-			    }
-		    }
-		    break;
-		
-		case SUHOSIN_CODE_TYPE_ASSERT:
-			break;
-		
-		case SUHOSIN_CODE_TYPE_CFUNC:
-			break;
-		
-		case SUHOSIN_CODE_TYPE_LONGNAME:
-			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') is too long", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout();
-			break;
-
-		case SUHOSIN_CODE_TYPE_MANYDOTS:
-			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') contains too many '../'", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout();
-			break;
-	    
-		case SUHOSIN_CODE_TYPE_UPLOADED:
-			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename is an uploaded file");
-			suhosin_bailout();
-			break;
-			
-	    case SUHOSIN_CODE_TYPE_0FILE:
-			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename contains an ASCIIZ character");
-			suhosin_bailout();
-			break;
-			
-		case SUHOSIN_CODE_TYPE_WRITABLE:
-			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') is writable by PHP process", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout();
-			break;		    	
-
-	    case SUHOSIN_CODE_TYPE_BLACKURL:
-			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') is a URL that is forbidden by the blacklist", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout();
-			break;
-			
-	    case SUHOSIN_CODE_TYPE_BADURL:
-			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename ('%s') is a URL that is not allowed", ZSTR_VAL(execute_data->func->op_array.filename));
-			suhosin_bailout();
-			break;
-
-	    case SUHOSIN_CODE_TYPE_BADFILE:
-// 		    cs.type = IS_STRING;
-// #define DIE_WITH_MSG "die('disallowed_file'.chr(10).chr(10));"
-// 		    cs.value.str.val = estrndup(DIE_WITH_MSG, sizeof(DIE_WITH_MSG)-1);
-// 		    cs.value.str.len = sizeof(DIE_WITH_MSG)-1;
-// 		    new_op_array = compile_string(&cs, "suhosin internal code");
-// 		    if (new_op_array) {
-// 				op_array = new_op_array;
-// 				goto continue_execution;
-// 		    }
-		    suhosin_bailout();
-		    break;
-
-	    case SUHOSIN_CODE_TYPE_COMMANDLINE:
-	    case SUHOSIN_CODE_TYPE_SUHOSIN:
-	    case SUHOSIN_CODE_TYPE_UNKNOWN:
-	    case SUHOSIN_CODE_TYPE_GOODFILE:
-			goto continue_execution;
-	}
+	char *filename = execute_data->func->op_array.filename ? ZSTR_VAL(execute_data->func->op_array.filename) : "<unknown>";
+	suhosin_check_codetype(op_array_type, filename);
 
 continue_execution:
-	old_execute_ex (execute_data);
+	old_execute_ex(execute_data);
 
 	/* nothing to do */
 	SUHOSIN7_G(in_code_type) = orig_code_type;
@@ -938,8 +870,10 @@ void suhosin_hook_execute()
 	/* Add additional protection layer, that SHOULD
 	   catch ZEND_INCLUDE_OR_EVAL *before* the engine tries
 	   to execute */
-	// old_zend_stream_open = zend_stream_open_function;
-	// zend_stream_open_function = suhosin_zend_stream_open;
+	if (old_zend_stream_open == NULL) {
+		old_zend_stream_open = zend_stream_open_function;
+	}
+	zend_stream_open_function = suhosin_zend_stream_open;
 	
 }
 /* }}} */
@@ -966,7 +900,7 @@ void suhosin_unhook_execute()
 	zend_hash_clean(&ihandler_table);
 	
 	/* remove zend_open protection */
-	// zend_stream_open_function = old_zend_stream_open;
+	zend_stream_open_function = old_zend_stream_open;
 	
 }
 /* }}} */
