@@ -1,9 +1,6 @@
 # suhosin7
 
-WARNING: THIS IS ONLY A PARTIAL PORT AND THEREFORE HORRIBLY BROKEN
-DO NOT ATTEMPT TO RUN... EVEN ON A TEST SYSTEM
-
-PHP7 is different from PHP5 under the hood, in particular string handling, so that features will have to be added and tested one by one.
+**WARNING: THIS SOFTWARE IS PRE-ALPHA SOFTWARE. DO NOT ATTEMPT TO RUN IN PRODUCTION**
 
 
 ## Reporting issues
@@ -24,4 +21,3 @@ When reporting feature requests, please consider writing a patch yourself and pr
 ## FAQ
 
 nothing yet.
-
