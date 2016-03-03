@@ -52,6 +52,7 @@ static PHP_INI_MH(suhosin_OnChangeMemoryLimit)
 	if (new_value) {
 		PG(memory_limit) = zend_atol(ZSTR_VAL(new_value), ZSTR_LEN(new_value));
 		if (hard_memory_limit > 0) {
+			// SDEBUG("%lld > %lld ?", PG(memory_limit), hard_memory_limit);
 			if (PG(memory_limit) > hard_memory_limit) {
 				suhosin_log(S_MISC, "script tried to increase memory_limit to " ZEND_LONG_FMT " bytes which is above the allowed value", PG(memory_limit));
 				if (!SUHOSIN7_G(simulation)) {

@@ -309,8 +309,8 @@ PHP_INI_BEGIN()
 	// 
 	STD_S7_INI_BOOLEAN("suhosin.multiheader",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, allow_multiheader)
 	// STD_S7_INI_ENTRY("suhosin.mail.protect",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscLong, mailprotect)
-	// STD_S7_INI_ENTRY("suhosin.memory_limit",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscLong, memory_limit)
-	// STD_S7_INI_BOOLEAN("suhosin.simulation",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, simulation)
+	STD_S7_INI_ENTRY("suhosin.memory_limit",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscLong, memory_limit)
+	STD_S7_INI_BOOLEAN("suhosin.simulation",			"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, simulation)
 	// STD_S7_INI_ENTRY("suhosin.filter.action",			NULL,	PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscString, filter_action)
 	// 
 	STD_S7_INI_BOOLEAN("suhosin.protectkey",			"1",	PHP_INI_SYSTEM,	OnUpdateBool, protectkey)
@@ -517,7 +517,7 @@ PHP_MINIT_FUNCTION(suhosin7)
 	suhosin_hook_header_handler();
 	suhosin_hook_execute();
 
-	// suhosin_hook_memory_limit();
+	suhosin_hook_memory_limit();
 	// suhosin_hook_sha256();
 
 	return SUCCESS;

@@ -151,7 +151,7 @@ static int suhosin_check_filename(char *s, int slen)
 	SDEBUG("fn=%s", s);
 	/* disallow uploaded files */
 	if (SG(rfc1867_uploaded_files)) {
-		if (zend_hash_str_exists(SG(rfc1867_uploaded_files), s, slen)) { // <--- TODO: range check
+		if (zend_hash_str_exists(SG(rfc1867_uploaded_files), s, slen)) {
 			return SUHOSIN_CODE_TYPE_UPLOADED;
 		}
 	}
@@ -777,9 +777,7 @@ ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, z
 	}
 	
 	suhosin_internal_function_handler *ih;
-	// SDEBUG("before %d", zend_hash_exists(&ihandler_table, function_name));
 	if ((ih = zend_hash_find_ptr(&ihandler_table, function_name))) {
-	// SDEBUG("AFTER");
 		void *handler = execute_data->func->internal_function.handler;
 		
 		if (handler != ZEND_FN(display_disabled_function)) {
