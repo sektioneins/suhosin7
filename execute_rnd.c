@@ -1,4 +1,25 @@
+/*
+  +----------------------------------------------------------------------+
+  | Suhosin Version 1                                                    |
+  +----------------------------------------------------------------------+
+  | Copyright (c) 2006-2007 The Hardened-PHP Project                     |
+  | Copyright (c) 2007-2016 SektionEins GmbH                             |
+  +----------------------------------------------------------------------+
+  | This source file is subject to version 3.01 of the PHP license,      |
+  | that is bundled with this package in the file LICENSE, and is        |
+  | available through the world-wide-web at the following url:           |
+  | http://www.php.net/license/3_01.txt                                  |
+  | If you did not receive a copy of the PHP license and are unable to   |
+  | obtain it through the world-wide-web, please send a note to          |
+  | license@php.net so we can mail you a copy immediately.               |
+  +----------------------------------------------------------------------+
+  | Authors: Stefan Esser <sesser@sektioneins.de>                        |
+  |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
+  +----------------------------------------------------------------------+
+*/
+
 /* MT RAND FUNCTIONS */
+
 
 /*
 	The following php_mt_...() functions are based on a C++ class MTRand by
@@ -55,11 +76,26 @@
 	The original code included the following notice:
 
 	When you use this, send an email to: matumoto@math.keio.ac.jp
-    with an appropriate reference to your work.
+	with an appropriate reference to your work.
 
 	It would be nice to CC: rjwagner@writeme.com and Cokus@math.washington.edu
 	when you write.
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "php.h"
+#include "php_suhosin7.h"
+#include "ext/hash/php_hash.h"
+#include "ext/hash/php_hash_sha.h"
+#include "ext/standard/php_lcg.h"
+#include "ext/standard/php_rand.h"
+#include "execute.h"
+
+#include <fcntl.h>
+
 
 #define N             624                 /* length of state vector */
 #define M             (397)                /* a period parameter */
@@ -93,21 +129,21 @@ static inline void suhosin_mt_initialize(php_uint32 seed, php_uint32 *state)
 
 static inline void suhosin_mt_init_by_array(php_uint32 *key, int keylen, php_uint32 *state)
 {
-    int i, j, k;
-    suhosin_mt_initialize(19650218U, state);
-    i = 1; j = 0;
-    k = (N > keylen ? N : keylen);
-    for (; k; k--) {
-        state[i] = (state[i] ^ ((state[i-1] ^ (state[i-1] >> 30)) * 1664525U)) + key[j] + j;
-        i++; j = (j+1) % keylen;
-        if (i >= N) { state[0] = state[N-1]; i=1; }
-    }
-    for (k=N-1; k; k--) {
-        state[i] = (state[i] ^ ((state[i-1] ^ (state[i-1] >> 30)) * 1566083941U)) - i;
-        i++;
-        if (i >= N) { state[0] = state[N-1]; i=1; }
-    }
-    state[0] = 0x80000000U;
+	int i, j, k;
+	suhosin_mt_initialize(19650218U, state);
+	i = 1; j = 0;
+	k = (N > keylen ? N : keylen);
+	for (; k; k--) {
+		state[i] = (state[i] ^ ((state[i-1] ^ (state[i-1] >> 30)) * 1664525U)) + key[j] + j;
+		i++; j = (j+1) % keylen;
+		if (i >= N) { state[0] = state[N-1]; i=1; }
+	}
+	for (k=N-1; k; k--) {
+		state[i] = (state[i] ^ ((state[i-1] ^ (state[i-1] >> 30)) * 1566083941U)) - i;
+		i++;
+		if (i >= N) { state[0] = state[N-1]; i=1; }
+	}
+	state[0] = 0x80000000U;
 }
 /* }}} */
 
@@ -171,48 +207,54 @@ static php_uint32 suhosin_mt_rand()
  */
 static void SUHOSIN7_Gen_entropy(php_uint32 *entropybuf)
 {
-    php_uint32 seedbuf[20];
-    /* On a modern OS code, stack and heap base are randomized */
-    unsigned long code_value  = (unsigned long)SUHOSIN7_Gen_entropy;
-    unsigned long stack_value = (unsigned long)&code_value;
-    unsigned long heap_value  = (unsigned long)SUHOSIN7_G(r_state);
-    suhosin_SHA256_CTX   context;
-    int fd;
-    
-    code_value ^= code_value >> 32;
-    stack_value ^= stack_value >> 32;
-    heap_value ^= heap_value >> 32;
-    
-    seedbuf[0] = code_value;
-    seedbuf[1] = stack_value;
-    seedbuf[2] = heap_value;
-    seedbuf[3] = time(0);
+	php_uint32 seedbuf[20];
+	/* On a modern OS code, stack and heap base are randomized */
+	unsigned long code_value  = (unsigned long)SUHOSIN7_Gen_entropy;
+	unsigned long stack_value = (unsigned long)&code_value;
+	unsigned long heap_value  = (unsigned long)SUHOSIN7_G(r_state);
+	PHP_SHA256_CTX   context;
+	int fd;
+
+	code_value ^= code_value >> 32;
+	stack_value ^= stack_value >> 32;
+	heap_value ^= heap_value >> 32;
+
+	seedbuf[0] = code_value;
+	seedbuf[1] = stack_value;
+	seedbuf[2] = heap_value;
+	seedbuf[3] = time(0);
 #ifdef PHP_WIN32
-    seedbuf[4] = GetCurrentProcessId();
+	seedbuf[4] = GetCurrentProcessId();
 #else
-    seedbuf[4] = getpid();
+	seedbuf[4] = getpid();
 #endif
-    seedbuf[5] = (php_uint32) 0x7fffffff * php_combined_lcg();
+	seedbuf[5] = (php_uint32) 0x7fffffff * php_combined_lcg();
 
 #ifndef PHP_WIN32
-    fd = VCWD_OPEN("/dev/urandom", O_RDONLY);
-    if (fd >= 0) {
-        /* ignore error case - if urandom doesn't give us any/enough random bytes */
-        read(fd, &seedbuf[6], 8 * sizeof(php_uint32));
-        close(fd);
-    }
+# if HAVE_DEV_URANDOM
+#  ifdef VIRTUAL_DIR
+	fd = VCWD_OPEN("/dev/urandom", O_RDONLY);
+#  else
+	fd = open("/dev/urandom", O_RDONLY);
+#  endif
+	if (fd >= 0) {
+		/* ignore error case - if urandom doesn't give us any/enough random bytes */
+		read(fd, &seedbuf[6], 8 * sizeof(php_uint32));
+		close(fd);
+	}
+# endif
 #else
-    /* we have to live with the possibility that this call fails */
-    php_win32_get_random_bytes((unsigned char*)&seedbuf[6], 8 * sizeof(php_uint32));
+	/* we have to live with the possibility that this call fails */
+	php_win32_get_random_bytes((unsigned char*)&seedbuf[6], 8 * sizeof(php_uint32));
 #endif
 
-    suhosin_SHA256Init(&context);
-    /* to our friends from Debian: yes this will add unitialized stack values to the entropy DO NOT REMOVE */
-    suhosin_SHA256Update(&context, (void *) seedbuf, sizeof(seedbuf));
-    if (SUHOSIN7_G(seedingkey) != NULL && *SUHOSIN7_G(seedingkey) != 0) {
-        suhosin_SHA256Update(&context, (unsigned char*)SUHOSIN7_G(seedingkey), strlen(SUHOSIN7_G(seedingkey)));
-    }
-    suhosin_SHA256Final((void *)entropybuf, &context);
+	PHP_SHA256Init(&context);
+	/* to our friends from Debian: yes this will add unitialized stack values to the entropy DO NOT REMOVE */
+	PHP_SHA256Update(&context, (void *) seedbuf, sizeof(seedbuf));
+	if (SUHOSIN7_G(seedingkey) != NULL && *SUHOSIN7_G(seedingkey) != 0) {
+		PHP_SHA256Update(&context, (unsigned char*)SUHOSIN7_G(seedingkey), strlen(SUHOSIN7_G(seedingkey)));
+	}
+	PHP_SHA256Final((void *)entropybuf, &context);
 }
 /* }}} */
 
@@ -283,7 +325,7 @@ static php_uint32 suhosin_rand()
 }
 /* }}} */
 
-static int ih_srand(IH_HANDLER_PARAMS)
+S7_IH_FUNCTION(srand)
 {
 	int argc = ZEND_NUM_ARGS();
 	long seed;
@@ -305,7 +347,7 @@ static int ih_srand(IH_HANDLER_PARAMS)
 	return (1);
 }
 
-static int ih_mt_srand(IH_HANDLER_PARAMS)
+S7_IH_FUNCTION(mt_srand)
 {
 	int argc = ZEND_NUM_ARGS();
 	long seed;
@@ -327,7 +369,7 @@ static int ih_mt_srand(IH_HANDLER_PARAMS)
 	return 1;
 }
 
-static int ih_mt_rand(IH_HANDLER_PARAMS)
+S7_IH_FUNCTION(mt_rand)
 {
 	int argc = ZEND_NUM_ARGS();
 	long min;
@@ -351,7 +393,7 @@ static int ih_mt_rand(IH_HANDLER_PARAMS)
 	return (1);
 }
 
-static int ih_rand(IH_HANDLER_PARAMS)
+S7_IH_FUNCTION(rand)
 {
 	int argc = ZEND_NUM_ARGS();
 	long min;
@@ -375,7 +417,7 @@ static int ih_rand(IH_HANDLER_PARAMS)
 	return (1);
 }
 
-static int ih_getrandmax(IH_HANDLER_PARAMS)
+S7_IH_FUNCTION(getrandmax)
 {
 	if (zend_parse_parameters_none() == FAILURE) {
 		return(0);

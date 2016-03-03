@@ -407,10 +407,10 @@ PHP_INI_BEGIN()
 	STD_S7_INI_BOOLEAN("suhosin.server.encode", "1", PHP_INI_SYSTEM, OnUpdateBool, server_encode)
 	STD_S7_INI_BOOLEAN("suhosin.server.strip", "1", PHP_INI_SYSTEM, OnUpdateBool, server_strip)
 	// 
-	// STD_S7_INI_ENTRY("suhosin.rand.seedingkey", "", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscString, seedingkey)
-	// STD_S7_INI_BOOLEAN("suhosin.rand.reseed_every_request", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscBool, reseed_every_request)
-	// STD_S7_INI_BOOLEAN("suhosin.srand.ignore", "1", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscBool, srand_ignore)
-	// STD_S7_INI_BOOLEAN("suhosin.mt_srand.ignore", "1", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscBool, mt_srand_ignore)
+	STD_S7_INI_ENTRY("suhosin.rand.seedingkey", "", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscString, seedingkey)
+	STD_S7_INI_BOOLEAN("suhosin.rand.reseed_every_request", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscBool, reseed_every_request)
+	STD_S7_INI_BOOLEAN("suhosin.srand.ignore", "1", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscBool, srand_ignore)
+	STD_S7_INI_BOOLEAN("suhosin.mt_srand.ignore", "1", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscBool, mt_srand_ignore)
 
 
 PHP_INI_END()
@@ -576,10 +576,10 @@ PHP_RSHUTDOWN_FUNCTION(suhosin7)
 
 	SUHOSIN7_G(abort_request) = 0;
 
-	// if (SUHOSIN7_G(reseed_every_request)) {
-	// 	SUHOSIN7_G(r_is_seeded) = 0;
-	// 	SUHOSIN7_G(mt_is_seeded) = 0;
-	// }
+	if (SUHOSIN7_G(reseed_every_request)) {
+		SUHOSIN7_G(r_is_seeded) = 0;
+		SUHOSIN7_G(mt_is_seeded) = 0;
+	}
 
 	if (SUHOSIN7_G(decrypted_cookie)) {
 		efree(SUHOSIN7_G(decrypted_cookie));

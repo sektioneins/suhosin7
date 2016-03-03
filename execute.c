@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-// #include <fcntl.h>
 #include "php.h"
 // #include "php_ini.h"
 // #include "zend_hash.h"
@@ -37,7 +36,6 @@
 #include "SAPI.h"
 #include "execute.h"
 
-// #include "sha256.h"
 
 // #ifdef PHP_WIN32
 // # include "win32/fnmatch.h"
@@ -555,6 +553,13 @@ static suhosin_internal_function_handler ihandlers[] = {
 	// { "mail", ih_mail, NULL, NULL, NULL },
 	// { "symlink", ih_symlink, NULL, NULL, NULL },
 	
+	// random number functions
+	S7_IH_ENTRY0i(srand)
+	S7_IH_ENTRY0i(mt_srand)
+	S7_IH_ENTRY0i(rand)
+	S7_IH_ENTRY0i(mt_rand)
+	S7_IH_ENTRY0i(getrandmax)
+	S7_IH_ENTRY0("mt_getrandmax", getrandmax)
 	// { "srand", ih_srand, NULL, NULL, NULL },
 	// { "mt_srand", ih_mt_srand, NULL, NULL, NULL },
 	// { "rand", ih_rand, NULL, NULL, NULL },

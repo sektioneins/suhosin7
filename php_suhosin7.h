@@ -67,7 +67,7 @@ extern zend_module_entry suhosin7_module_entry;
 // PHP_RSHUTDOWN_FUNCTION(suhosin);
 // PHP_MINFO_FUNCTION(suhosin);
 
-// #include "ext/standard/basic_functions.h"
+#include "ext/standard/basic_functions.h"
 
 static inline int suhosin_is_protected_varname(char *var, int var_len)
 {
@@ -252,20 +252,20 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool	disable_display_errors;
 
 	/* random number generator */
-	// php_uint32   r_state[625];
-	// php_uint32   *r_next;
-	// int          r_left;
-	// zend_bool    srand_ignore;
-	// zend_bool    mt_srand_ignore;
-	// php_uint32   mt_state[625];
-	// php_uint32   *mt_next;
-	// int          mt_left;
+	php_uint32   r_state[625];
+	php_uint32   *r_next;
+	int          r_left;
+	zend_bool    srand_ignore;
+	zend_bool    mt_srand_ignore;
+	php_uint32   mt_state[625];
+	php_uint32   *mt_next;
+	int          mt_left;
+	
+	char         *seedingkey;
+	zend_bool    reseed_every_request;
 	// 
-	// char         *seedingkey;
-	// zend_bool    reseed_every_request;
-	// 
-	// zend_bool r_is_seeded; 
-	// zend_bool mt_is_seeded;
+	zend_bool r_is_seeded; 
+	zend_bool mt_is_seeded;
 
 
 /*	memory_limit */

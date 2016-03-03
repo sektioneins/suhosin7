@@ -18,4 +18,12 @@ typedef struct _suhosin_internal_function_handler {
 	void *arg3;
 } suhosin_internal_function_handler;
 
+// execute_ih.c
 S7_IH_FUNCTION(preg_replace);
+
+// execute_rnd.c
+S7_IH_FUNCTION(srand);
+S7_IH_FUNCTION(mt_srand);
+S7_IH_FUNCTION(mt_rand);
+S7_IH_FUNCTION(rand);
+S7_IH_FUNCTION(getrandmax);
