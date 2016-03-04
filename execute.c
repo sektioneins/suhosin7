@@ -562,7 +562,7 @@ static suhosin_internal_function_handler ihandlers[] = {
 	S7_IH_ENTRY0i(getrandmax)
 	S7_IH_ENTRY0("mt_getrandmax", getrandmax)
 	
-	// { "function_exists", ih_function_exists, NULL, NULL, NULL },
+	S7_IH_ENTRY0i(function_exists)
 	
 	/* Mysqli */
 	// { "mysqli::mysqli", ih_fixusername, (void *)2, NULL, NULL },

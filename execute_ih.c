@@ -8,7 +8,6 @@ S7_IH_FUNCTION(preg_replace)
 {
 	zval *regex, *replace, *subject, *zcount = NULL;
 	zend_long limit = -1;
-	// int replace_count;
 
 #ifndef FAST_ZPP
 	/* Get function parameters and do error-checking. */
@@ -69,18 +68,86 @@ S7_IH_FUNCTION(preg_replace)
 S7_IH_FUNCTION(symlink)
 {
 	if (SUHOSIN7_G(executor_allow_symlink)) {
-		return (0);
+		return SUCCESS;
 	}
 	
 	if (PG(open_basedir) && PG(open_basedir)[0]) {
 		suhosin_log(S_EXECUTOR, "symlink called during open_basedir");
 		if (!SUHOSIN7_G(simulation)) {
 			RETVAL_FALSE;
-			return (1);
+			return FAILURE;
 		}
 	}
 	
-	return (0);
+	return SUCCESS;
+}
+
+S7_IH_FUNCTION(function_exists)
+{
+	zend_string *name;
+	zend_string *lcname;
+	
+#ifndef FAST_ZPP
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &name) == FAILURE) {
+		return FAILURE;
+	}
+#else
+	ZEND_PARSE_PARAMETERS_START(1, 1)
+		Z_PARAM_STR(name)
+	ZEND_PARSE_PARAMETERS_END_EX(return FAILURE);
+#endif
+
+	if (ZSTR_VAL(name)[0] == '\\') {
+		/* Ignore leading "\" */
+		lcname = zend_string_alloc(ZSTR_LEN(name) - 1, 0);
+		zend_str_tolower_copy(ZSTR_VAL(lcname), ZSTR_VAL(name) + 1, ZSTR_LEN(name) - 1);
+	} else {
+		lcname = zend_string_tolower(name);
+	}
+
+	zend_function *func = zend_hash_find_ptr(EG(function_table), lcname);
+
+	/*
+	 * A bit of a hack, but not a bad one: we see if the handler of the function
+	 * is actually one that displays "function is disabled" message.
+	 */
+	zend_bool retval = (func && (func->type != ZEND_INTERNAL_FUNCTION ||
+		func->internal_function.handler != zif_display_disabled_function));
+	if (retval == 0) {
+		goto function_exists_return;
+	}
+
+	/* Now check if function is forbidden by Suhosin */
+	if (SUHOSIN7_G(in_code_type) == SUHOSIN_EVAL) {
+		if (SUHOSIN7_G(eval_whitelist) != NULL) {
+			if (!zend_hash_exists(SUHOSIN7_G(eval_whitelist), lcname)) {
+			    retval = 0;
+				goto function_exists_return;
+			}
+		} else if (SUHOSIN7_G(eval_blacklist) != NULL) {
+			if (zend_hash_exists(SUHOSIN7_G(eval_blacklist), lcname)) {
+			    retval = 0;
+				goto function_exists_return;
+			}
+		}
+	}
+	
+	if (SUHOSIN7_G(func_whitelist) != NULL) {
+		if (!zend_hash_exists(SUHOSIN7_G(func_whitelist), lcname)) {
+		    retval = 0;
+			goto function_exists_return;
+		}
+	} else if (SUHOSIN7_G(func_blacklist) != NULL) {
+		if (zend_hash_exists(SUHOSIN7_G(func_blacklist), lcname)) {
+		    retval = 0;
+			goto function_exists_return;
+		}
+	}
+
+function_exists_return:
+	zend_string_release(lcname);
+	RETVAL_BOOL(retval);
+	return FAILURE;
 }
 
 // int ih_mail(IH_HANDLER_PARAMS)
@@ -438,58 +505,3 @@ S7_IH_FUNCTION(symlink)
 // }
 // 
 // 
-// static int ih_function_exists(IH_HANDLER_PARAMS)
-// {
-// 	zval **function_name;
-// 	zend_function *func;
-// 	char *lcname;
-// 	zend_bool retval;
-// 	int func_name_len;
-// 	
-// 	if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &function_name)==FAILURE) {
-// 		ZEND_WRONG_PARAM_COUNT_WITH_RETVAL(1);
-// 	}
-// 	convert_to_string_ex(function_name);
-// 	func_name_len = Z_STRLEN_PP(function_name);
-// 	lcname = estrndup(Z_STRVAL_PP(function_name), func_name_len);	
-// 	zend_str_tolower(lcname, func_name_len);
-// 
-// 	retval = (zend_hash_find(EG(function_table), lcname, func_name_len+1, (void **)&func) == SUCCESS);
-// 	
-// 	/*
-// 	 * A bit of a hack, but not a bad one: we see if the handler of the function
-// 	 * is actually one that displays "function is disabled" message.
-// 	 */
-// 	if (retval && func->type == ZEND_INTERNAL_FUNCTION &&
-// 		func->internal_function.handler == zif_display_disabled_function) {
-// 		retval = 0;
-// 	}
-// 
-// 	/* Now check if function is forbidden by Suhosin */
-// 	if (SUHOSIN7_G(in_code_type) == SUHOSIN_EVAL) {
-// 		if (SUHOSIN7_G(eval_whitelist) != NULL) {
-// 			if (!zend_hash_exists(SUHOSIN7_G(eval_whitelist), lcname, func_name_len+1)) {
-// 			    retval = 0;
-// 			}
-// 		} else if (SUHOSIN7_G(eval_blacklist) != NULL) {
-// 			if (zend_hash_exists(SUHOSIN7_G(eval_blacklist), lcname, func_name_len+1)) {
-// 			    retval = 0;
-// 			}
-// 		}
-// 	}
-// 	
-// 	if (SUHOSIN7_G(func_whitelist) != NULL) {
-// 		if (!zend_hash_exists(SUHOSIN7_G(func_whitelist), lcname, func_name_len+1)) {
-// 		    retval = 0;
-// 		}
-// 	} else if (SUHOSIN7_G(func_blacklist) != NULL) {
-// 		if (zend_hash_exists(SUHOSIN7_G(func_blacklist), lcname, func_name_len+1)) {
-// 		    retval = 0;
-// 		}
-// 	}
-// 
-// 	efree(lcname);
-// 
-// 	RETVAL_BOOL(retval);
-// 	return (1);
-// }
