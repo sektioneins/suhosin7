@@ -20,4 +20,11 @@ if test "$PHP_SUHOSIN7_EXPERIMENTAL" != "no"; then
 	AC_DEFINE(SUHOSIN7_EXPERIMENTAL, 1, [Whether to enable experimental suhosin7 features])
 fi
 
+PHP_ARG_ENABLE(suhosin7-debug, whether to enable suhosin7 debugging,
+[  --enable-suhosin7-debug       Enable suhosin7 debugging], no, no)
+
+if test "$PHP_SUHOSIN7_DEBUG" != "no"; then
+	AC_DEFINE(SUHOSIN7_DEBUG, 1, [Whether to enable suhosin7 debugging])
+fi
+
 CFLAGS="$CFLAGS -std=c11"
