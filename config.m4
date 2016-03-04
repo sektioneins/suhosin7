@@ -27,4 +27,4 @@ if test "$PHP_SUHOSIN7_DEBUG" != "no"; then
 	AC_DEFINE(SUHOSIN7_DEBUG, 1, [Whether to enable suhosin7 debugging])
 fi
 
-CFLAGS="$CFLAGS -std=c11"
+CFLAGS="$CFLAGS -std=c99"
