@@ -378,7 +378,7 @@ PHP_INI_BEGIN()
 
 #ifdef HAVE_PHP_SESSION
 	// STD_S7_INI_BOOLEAN("suhosin.session.encrypt",		"1",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_encrypt)
-	// STD_S7_INI_ENTRY("suhosin.session.cryptkey", "", PHP_INI_ALL, OnUpdateMiscString, session_cryptkey)
+	STD_S7_INI_ENTRY("suhosin.session.cryptkey", "", PHP_INI_ALL, OnUpdateMiscString, session_cryptkey)
 	// STD_S7_INI_BOOLEAN("suhosin.session.cryptua",		"0",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_cryptua)
 	// STD_S7_INI_BOOLEAN("suhosin.session.cryptdocroot",		"1",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_cryptdocroot)
 	// STD_S7_INI_ENTRY("suhosin.session.cryptraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscLong, session_cryptraddr)	
