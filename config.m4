@@ -19,3 +19,5 @@ PHP_ARG_ENABLE(suhosin7-experimental, whether to enable experimental suhosin7 fe
 if test "$PHP_SUHOSIN7_EXPERIMENTAL" != "no"; then
 	AC_DEFINE(SUHOSIN7_EXPERIMENTAL, 1, [Whether to enable experimental suhosin7 features])
 fi
+
+CFLAGS="$CFLAGS -std=c11"
