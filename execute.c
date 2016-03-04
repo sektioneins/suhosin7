@@ -552,6 +552,7 @@ static suhosin_internal_function_handler ihandlers[] = {
 	// { "preg_replace", ih_preg_replace, NULL, NULL, NULL },
 	// { "mail", ih_mail, NULL, NULL, NULL },
 	// { "symlink", ih_symlink, NULL, NULL, NULL },
+	S7_IH_ENTRY0i(symlink)
 	
 	// random number functions
 	S7_IH_ENTRY0i(srand)
@@ -560,12 +561,6 @@ static suhosin_internal_function_handler ihandlers[] = {
 	S7_IH_ENTRY0i(mt_rand)
 	S7_IH_ENTRY0i(getrandmax)
 	S7_IH_ENTRY0("mt_getrandmax", getrandmax)
-	// { "srand", ih_srand, NULL, NULL, NULL },
-	// { "mt_srand", ih_mt_srand, NULL, NULL, NULL },
-	// { "rand", ih_rand, NULL, NULL, NULL },
-	// { "mt_rand", ih_mt_rand, NULL, NULL, NULL },
-	// { "getrandmax", ih_getrandmax, NULL, NULL, NULL },
-	// { "mt_getrandmax", ih_getrandmax, NULL, NULL, NULL },
 	
 	// { "function_exists", ih_function_exists, NULL, NULL, NULL },
 	

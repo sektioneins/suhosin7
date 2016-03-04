@@ -131,7 +131,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	
 	/* executor */
 	zend_ulong in_code_type;
-	// zend_bool executor_allow_symlink;
+	zend_bool executor_allow_symlink;
 	long execution_depth;
 	long max_execution_depth;
 	long executor_include_max_traversal;

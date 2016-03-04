@@ -20,6 +20,7 @@ typedef struct _suhosin_internal_function_handler {
 
 // execute_ih.c
 S7_IH_FUNCTION(preg_replace);
+S7_IH_FUNCTION(symlink);
 
 // execute_rnd.c
 S7_IH_FUNCTION(srand);

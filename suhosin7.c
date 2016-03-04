@@ -303,7 +303,7 @@ PHP_INI_BEGIN()
 	// STD_S7_INI_BOOLEAN("suhosin.executor.disable_eval",	"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecBool, executor_disable_eval)
 	STD_S7_INI_BOOLEAN("suhosin.executor.disable_emodifier",	"0",	PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecBool, executor_disable_emod)
 	// 
-	// STD_S7_INI_BOOLEAN("suhosin.executor.allow_symlink",	"0",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecBool, executor_allow_symlink)
+	STD_S7_INI_BOOLEAN("suhosin.executor.allow_symlink",	"0",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecBool, executor_allow_symlink)
 	STD_S7_INI_ENTRY("suhosin.executor.max_depth",		"750",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateExecLong, max_execution_depth)
 	// 
 	// 

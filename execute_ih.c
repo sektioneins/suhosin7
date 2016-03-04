@@ -66,22 +66,22 @@ S7_IH_FUNCTION(preg_replace)
 // #endif /* SUHOSIN7_PREG_REPLACE_NULL */
 
 
-// int ih_symlink(IH_HANDLER_PARAMS)
-// {
-// 	if (SUHOSIN7_G(executor_allow_symlink)) {
-// 		return (0);
-// 	}
-// 	
-// 	if (PG(open_basedir) && PG(open_basedir)[0]) {
-// 		suhosin_log(S_EXECUTOR, "symlink called during open_basedir");
-// 		if (!SUHOSIN7_G(simulation)) {
-// 			RETVAL_FALSE;
-// 			return (1);
-// 		}
-// 	}
-// 	
-// 	return (0);
-// }
+S7_IH_FUNCTION(symlink)
+{
+	if (SUHOSIN7_G(executor_allow_symlink)) {
+		return (0);
+	}
+	
+	if (PG(open_basedir) && PG(open_basedir)[0]) {
+		suhosin_log(S_EXECUTOR, "symlink called during open_basedir");
+		if (!SUHOSIN7_G(simulation)) {
+			RETVAL_FALSE;
+			return (1);
+		}
+	}
+	
+	return (0);
+}
 
 // int ih_mail(IH_HANDLER_PARAMS)
 // {
