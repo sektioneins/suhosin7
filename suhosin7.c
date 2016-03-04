@@ -27,16 +27,13 @@
 #include "php.h"
 #include "php_ini.h"
 #include "SAPI.h"
-#include "php_suhosin7.h"
 #include "suhosin7_logo.h"
 #include "ext/standard/base64.h"
 #include "ext/standard/info.h"
+#include "php_suhosin7.h"
 
 
 ZEND_DECLARE_MODULE_GLOBALS(suhosin7)
-
-/* True global resources - no need for thread safety here */
-// static int le_suhosin7;
 
 /* ------------------------------------------------------------------------ */
 /* PERDIR CHECKS */
@@ -449,6 +446,11 @@ char *suhosin_getenv(char *name, size_t name_len)
  */
 static void php_suhosin7_init_globals(zend_suhosin7_globals *suhosin7_globals)
 {
+	SDEBUG(".");
+#if defined(COMPILE_DL_SUHOSIN7) && defined(ZTS)
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+
 	memset(suhosin7_globals, 0, sizeof(zend_suhosin7_globals));
 }
 /* }}} */
@@ -540,6 +542,10 @@ PHP_MSHUTDOWN_FUNCTION(suhosin7)
 PHP_RINIT_FUNCTION(suhosin7)
 {
 	SDEBUG("(RINIT)");
+#if defined(COMPILE_DL_SUHOSIN7) && defined(ZTS)
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+
 	SUHOSIN7_G(in_code_type) = SUHOSIN_NORMAL;
 	SUHOSIN7_G(execution_depth) = 0;
 

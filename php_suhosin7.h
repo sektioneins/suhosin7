@@ -37,6 +37,9 @@ extern zend_module_entry suhosin7_module_entry;
 #	define SUHOSIN7_API
 #endif
 
+#ifdef ZTS
+#include "TSRM.h"
+#endif
 
 /* -------------- */
 
@@ -323,11 +326,11 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 
 ZEND_END_MODULE_GLOBALS(suhosin7)
 
-/* Always refer to the globals in your function as SUHOSIN7_G(variable).
-   You are encouraged to rename these macros something shorter, see
-   examples in any other php module directory.
-*/
 #define SUHOSIN7_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(suhosin7, v)
+
+#if defined(ZTS) && defined(COMPILE_DL_SUHOSIN7)
+ZEND_TSRMLS_CACHE_EXTERN();
+#endif
 
 
 /* Error Constants */
@@ -416,8 +419,6 @@ char *suhosin_strcasestr(char *haystack, char *needle)
 #else
 #define suhosin_strcasestr(a, b) strcasestr(a, b)
 #endif
-
-/* {{{ suhosin_strcasestr */
 
 
 /*
