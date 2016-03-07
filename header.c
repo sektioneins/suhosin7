@@ -75,7 +75,7 @@ static int suhosin_header_handler(sapi_header_struct *sapi_header, sapi_header_o
 		int nlen, vlen, len, tlen;
 		char cryptkey[33];
 
-		suhosin_generate_key(SUHOSIN7_G(cookie_cryptkey), SUHOSIN7_G(cookie_cryptua), SUHOSIN7_G(cookie_cryptdocroot), SUHOSIN7_G(cookie_cryptraddr), (char *)cryptkey);
+		S7_GENERATE_KEY(cookie, cryptkey);
 		start = estrndup(sapi_header->header, sapi_header->header_len);
 		rend = end = start + sapi_header->header_len;
 

@@ -106,8 +106,9 @@ char *suhosin_cookie_decryptor(char *raw_cookie)
 	// int j;
 	char cryptkey[33];
 
-	suhosin_generate_key(SUHOSIN7_G(cookie_cryptkey), SUHOSIN7_G(cookie_cryptua), SUHOSIN7_G(cookie_cryptdocroot), SUHOSIN7_G(cookie_cryptraddr), cryptkey);
-	SDEBUG("cryptkey=%02x.%02x.%02x", cryptkey[0], cryptkey[1], cryptkey[2]);
+	// suhosin_generate_key(SUHOSIN7_G(cookie_cryptkey), SUHOSIN7_G(cookie_cryptua), SUHOSIN7_G(cookie_cryptdocroot), SUHOSIN7_G(cookie_cryptraddr), cryptkey);
+	S7_GENERATE_KEY(cookie, cryptkey);
+	// SDEBUG("cryptkey=%02x.%02x.%02x", cryptkey[0], cryptkey[1], cryptkey[2]);
 	
 	ret = decrypted = emalloc(strlen(raw_cookie)*4+1);
 	raw_cookie = estrdup(raw_cookie);

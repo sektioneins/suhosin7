@@ -71,6 +71,9 @@ extern zend_module_entry suhosin7_module_entry;
 // PHP_MINFO_FUNCTION(suhosin);
 
 #include "ext/standard/basic_functions.h"
+#ifdef HAVE_PHP_SESSION
+#include "ext/session/php_session.h"
+#endif
 
 static inline int suhosin_is_protected_varname(char *var, int var_len)
 {
@@ -218,6 +221,15 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool  no_more_post_variables;
 	zend_bool  no_more_cookie_variables;
 	zend_bool  no_more_uploads;
+
+	/*	session */
+#ifdef HAVE_PHP_SESSION
+	void *s_module;
+	void *s_original_mod;
+	int (*old_s_read)(PS_READ_ARGS);
+	int (*old_s_write)(PS_WRITE_ARGS);
+	int (*old_s_destroy)(PS_DESTROY_ARGS);
+#endif
 
 	/* encryption */
 	BYTE fi[24],ri[24];
@@ -377,6 +389,9 @@ void suhosin_hook_header_handler();
 void suhosin_unhook_header_handler();
 void suhosin_hook_execute();
 // void suhosin_hook_sha256();
+#ifdef HAVE_PHP_SESSION
+void suhosin_hook_session();
+#endif
 
 // ifilter.c
 void suhosin_normalize_varname(char *varname);
@@ -390,6 +405,7 @@ char *suhosin_decrypt_single_cookie(char *name, int name_len, char *value, int v
 zend_string *suhosin_encrypt_string(char *str, int len, char *var, int vlen, char *key);
 zend_string *suhosin_decrypt_string(char *str, int padded_len, char *var, int vlen, char *key, int check_ra);
 char *suhosin_generate_key(char *key, zend_bool ua, zend_bool dr, long raddr, char *cryptkey);
+#define S7_GENERATE_KEY(type, keyvar) suhosin_generate_key(SUHOSIN7_G(type ## _cryptkey), SUHOSIN7_G(type ## _cryptua), SUHOSIN7_G(type ## _cryptdocroot), SUHOSIN7_G(type ## _cryptraddr), (char *)keyvar);
 
 // aes.c
 void suhosin_aes_gentables();

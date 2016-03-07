@@ -377,13 +377,13 @@ PHP_INI_BEGIN()
 	// STD_S7_INI_ENTRY("suhosin.sql.union", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateSQLLong, sql_union)
 
 #ifdef HAVE_PHP_SESSION
-	// STD_S7_INI_BOOLEAN("suhosin.session.encrypt",		"1",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_encrypt)
+	STD_S7_INI_BOOLEAN("suhosin.session.encrypt", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_encrypt)
 	STD_S7_INI_ENTRY("suhosin.session.cryptkey", "", PHP_INI_ALL, OnUpdateMiscString, session_cryptkey)
-	// STD_S7_INI_BOOLEAN("suhosin.session.cryptua",		"0",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_cryptua)
-	// STD_S7_INI_BOOLEAN("suhosin.session.cryptdocroot",		"1",		PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_cryptdocroot)
-	// STD_S7_INI_ENTRY("suhosin.session.cryptraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscLong, session_cryptraddr)	
-	// STD_S7_INI_ENTRY("suhosin.session.checkraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscLong, session_checkraddr)	
-	// STD_S7_INI_ENTRY("suhosin.session.max_id_length", "128", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscLong, session_max_id_length)
+	STD_S7_INI_BOOLEAN("suhosin.session.cryptua", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_cryptua)
+	STD_S7_INI_BOOLEAN("suhosin.session.cryptdocroot", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM,	OnUpdateMiscBool, session_cryptdocroot)
+	STD_S7_INI_ENTRY("suhosin.session.cryptraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscLong, session_cryptraddr)
+	STD_S7_INI_ENTRY("suhosin.session.checkraddr", "0", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscLong, session_checkraddr)
+	STD_S7_INI_ENTRY("suhosin.session.max_id_length", "128", PHP_INI_SYSTEM|PHP_INI_PERDIR, OnUpdateMiscLong, session_max_id_length)
 #else /* HAVE_PHP_SESSION */
 #warning BUILDING SUHOSIN WITHOUT SESSION SUPPORT. THIS IS A BAD IDEA!
 #ifndef SUHOSIN_WITHOUT_SESSION
@@ -518,9 +518,11 @@ PHP_MINIT_FUNCTION(suhosin7)
 	suhosin_hook_register_server_variables();
 	suhosin_hook_header_handler();
 	suhosin_hook_execute();
-
 	suhosin_hook_memory_limit();
 	// suhosin_hook_sha256();
+#ifdef HAVE_PHP_SESSION
+	suhosin_hook_session();
+#endif
 
 	return SUCCESS;
 }
