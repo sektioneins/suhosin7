@@ -266,6 +266,7 @@ void suhosin_register_server_variables(zval *track_vars_array)
 		zval z;
 		ZVAL_STRING(&z, SUHOSIN7_G(decrypted_cookie));
 		zend_hash_str_update(svars, "HTTP_COOKIE", sizeof("HTTP_COOKIE")-1, &z);
+		efree(SUHOSIN7_G(decrypted_cookie));
 		SUHOSIN7_G(decrypted_cookie) = NULL;
 	}
 	
