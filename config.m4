@@ -29,7 +29,7 @@ fi
 
 AC_MSG_CHECKING([for C11 support with -std=c11])
 old_CFLAGS="$CFLAGS"
-CFLAGS+=" -std=c11"
+CFLAGS="${CFLAGS} -std=c11"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT([yes])],[
 	AC_MSG_RESULT([no])
 	CFLAGS="$old_CFLAGS"
@@ -38,7 +38,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT([yes])],[
 	echo "  support. Trying C99 instead, but compiling may fail."
 	echo "=========================================================="
 	AC_MSG_CHECKING([for C99 support with -std=c99])
-	CFLAGS+=" -std=c99"
+	CFLAGS="${CFLAGS} -std=c99"
 	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT([yes])],[
 		AC_MSG_RESULT([no])
 		CFLAGS="$old_CFLAGS"
