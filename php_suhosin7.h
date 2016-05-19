@@ -389,6 +389,8 @@ void suhosin_hook_header_handler();
 void suhosin_unhook_header_handler();
 void suhosin_hook_execute();
 // void suhosin_hook_sha256();
+void suhosin_hook_ex_imp();
+
 #ifdef HAVE_PHP_SESSION
 void suhosin_hook_session();
 #endif

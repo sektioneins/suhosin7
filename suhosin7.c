@@ -520,6 +520,8 @@ PHP_MINIT_FUNCTION(suhosin7)
 	suhosin_hook_execute();
 	suhosin_hook_memory_limit();
 	// suhosin_hook_sha256();
+	suhosin_hook_ex_imp();
+
 #ifdef HAVE_PHP_SESSION
 	suhosin_hook_session();
 #endif
