@@ -205,16 +205,16 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool  disallow_post_ws;
 	
 /*	fileupload */
-	// zend_long  upload_limit;
-	// zend_long  upload_max_newlines;
-	// zend_long  num_uploads;
-	// zend_bool  upload_disallow_elf;
-	// zend_bool  upload_disallow_binary;
-	// zend_bool  upload_remove_binary;
+	zend_long  upload_max_newlines;
+	zend_long  upload_limit;
+	zend_long  num_uploads;
+	zend_bool  upload_disallow_elf;
+	zend_bool  upload_disallow_binary;
+	zend_bool  upload_remove_binary;
 #ifdef SUHOSIN7_EXPERIMENTAL
-	// zend_bool  upload_allow_utf8;
+	zend_bool  upload_allow_utf8;
 #endif
-	// char *upload_verification_script;
+	char *upload_verification_script;
 
 	zend_bool  no_more_variables;
 	zend_bool  no_more_get_variables;
@@ -395,8 +395,12 @@ void suhosin_hook_ex_imp();
 void suhosin_hook_session();
 #endif
 
+void suhosin_hook_post_handlers();
+
 // ifilter.c
 void suhosin_normalize_varname(char *varname);
+size_t suhosin_strnspn(const char *input, size_t n, const char *accept);
+size_t suhosin_strncspn(const char *input, size_t n, const char *reject);
 
 // cookiecrypt.c
 char *suhosin_cookie_decryptor(char *raw_cookie);
@@ -414,6 +418,7 @@ void suhosin_aes_gentables();
 void suhosin_aes_gkey(int nb,int nk,char *key);
 void suhosin_aes_encrypt(char *buff);
 void suhosin_aes_decrypt(char *buff);
+
 
 //
 

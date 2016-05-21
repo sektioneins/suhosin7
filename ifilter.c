@@ -41,7 +41,7 @@ static size_t strnlen(const char *s, size_t maxlen) {
 }
 #endif
 
-static size_t suhosin_strnspn(const char *input, size_t n, const char *accept)
+size_t suhosin_strnspn(const char *input, size_t n, const char *accept)
 {
 	size_t count = 0;
 	for (; *input != '\0' && count < n; input++, count++) {
@@ -51,7 +51,7 @@ static size_t suhosin_strnspn(const char *input, size_t n, const char *accept)
 	return count;
 }
 
-static size_t suhosin_strncspn(const char *input, size_t n, const char *reject)
+size_t suhosin_strncspn(const char *input, size_t n, const char *reject)
 {
 	size_t count = 0;
 	for (; *input != '\0' && count < n; input++, count++) {
@@ -635,7 +635,7 @@ SAPI_INPUT_FILTER_FUNC(suhosin_input_filter_wrapper)
 	// }
 	
 	// if (!already_scanned) {
-		if (suhosin_input_filter(arg, var, val, val_len, new_val_len)==0) {
+		if (suhosin_input_filter(arg, var, val, val_len, new_val_len) == 0) {
 			SUHOSIN7_G(abort_request)=1;
 			return 0;
 		}
@@ -644,7 +644,14 @@ SAPI_INPUT_FILTER_FUNC(suhosin_input_filter_wrapper)
 		}
 	// }
 	if (orig_input_filter) {
-		return orig_input_filter(arg, var, val, val_len, new_val_len);
+
+		if (orig_input_filter(arg, var, val, val_len, new_val_len) == 0) {
+			SUHOSIN7_G(abort_request)=1;
+			return 0;
+		} else {
+			return 1;
+		}
+
 	} else {
 		return 1;
 	}
