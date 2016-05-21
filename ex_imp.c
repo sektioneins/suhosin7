@@ -16,6 +16,17 @@
   | Authors: Stefan Esser <sesser@sektioneins.de>                        |
   |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
+
+  Note: The following code is based on ext/standard/array.c from PHP 7.
+  | Copyright (c) 1997-2016 The PHP Group                                |
+  Original PHP Version 7 Authors:
+  |          Andi Gutmans <andi@zend.com>                                |
+  |          Zeev Suraski <zeev@zend.com>                                |
+  |          Rasmus Lerdorf <rasmus@php.net>                             |
+  |          Andrei Zmievski <andrei@php.net>                            |
+  |          Stig Venaas <venaas@php.net>                                |
+  |          Jason Greene <jason@php.net>                                |
+
 */
 
 #ifdef HAVE_CONFIG_H
