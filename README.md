@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/sektioneins/suhosin7.svg?branch=master)](https://travis-ci.org/sektioneins/suhosin7)
+
 # suhosin7
 
 **WARNING: THIS SOFTWARE IS PRE-ALPHA SOFTWARE. DO NOT ATTEMPT TO RUN IN PRODUCTION**
