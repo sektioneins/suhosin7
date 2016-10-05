@@ -16,7 +16,7 @@
   | Authors: Stefan Esser <sesser@sektioneins.de>                        |
   |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
-  
+
   Note: The following code is based on main/rfc1867.c from PHP 7.
   | Copyright (c) 1997-2016 The PHP Group                                |
   Original PHP Version 7 Authors:
@@ -33,13 +33,11 @@
  *
  */
 
-#include <stdio.h>
 #include "php.h"
 #include "php_open_temporary_file.h"
 #include "zend_globals.h"
 #include "php_globals.h"
 #include "php_variables.h"
-// #include "rfc1867.h"
 #include "suhosin_rfc1867.h"
 #include "php_suhosin7.h"
 #include "ext/standard/php_string.h"
@@ -424,7 +422,7 @@ static int multipart_buffer_headers(multipart_buffer *self, zend_llist *header)
 	smart_string buf_value = {0};
 	char *key = NULL;
 	size_t newlines = 0;
-	
+
 	/* didn't find boundary, abort */
 	if (!find_boundary(self, self->boundary)) {
 		return 0;
