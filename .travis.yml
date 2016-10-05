@@ -1,7 +1,8 @@
+language: php
 sudo: required
 dist: trusty
-
-language: php
+os: linux
+group: edge
 
 php:
   - 7.0
@@ -10,8 +11,15 @@ env:
   - CC=gcc-4.8 CFLAGS=""
   - CC=clang   CFLAGS=""
 
+before_install:
+  - lsb_release -a
+  - uname -a
+
 before_script:
-  - phpize && ./configure && make
+  - phpize
+  - ./configure --enable-suhosin7-experimental --enable-suhosin7-debug
+  - make -j2
+  - phpenv config-rm xdebug.ini
 
 script:
-  - make test
+  - make test NO_INTERACTION=1
