@@ -17,9 +17,6 @@
   |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
 */
-/*
-  $Id: post_handler.c,v 1.1.1.1 2007-11-28 01:15:35 sesser Exp $ 
-*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -49,7 +46,7 @@ static void suhosin_post_handler_modification(sapi_post_entry *spe)
 }
 
 // static PHP_INI_MH((*old_OnUpdate_mbstring_encoding_translation)) = NULL;
-// 
+//
 // /* {{{ static PHP_INI_MH(suhosin_OnUpdate_mbstring_encoding_translation) */
 // static PHP_INI_MH(suhosin_OnUpdate_mbstring_encoding_translation)
 // {
@@ -58,12 +55,12 @@ static void suhosin_post_handler_modification(sapi_post_entry *spe)
 // 	char *base = (char *) mh_arg2;
 // #else
 // 	char *base;
-// 
+//
 // 	base = (char *) ts_resource(*((int *) mh_arg2));
 // #endif
-// 
+//
 // 	p = (zend_bool *) (base+(size_t) mh_arg1);
-// 
+//
 // 	if (new_value_length == 2 && strcasecmp("on", new_value) == 0) {
 // 			*p = (zend_bool) 1;
 // 	}
@@ -96,7 +93,7 @@ void suhosin_hook_post_handlers()
 {
 	HashTable tempht;
 	// zend_ini_entry *ini_entry;
-	
+
 	sapi_unregister_post_entry(&suhosin_post_entries[0]);
 	// sapi_unregister_post_entry(&suhosin_post_entries[1]);
 	sapi_register_post_entries(suhosin_post_entries);
@@ -109,7 +106,7 @@ void suhosin_hook_post_handlers()
 	// zend_hash_destroy(&tempht);
 	/* And now we can overwrite the destructor for post entries */
 	// SG(known_post_content_types).pDestructor = (dtor_func_t)suhosin_post_handler_modification;
-	
+
 	/* we have to stop mbstring from replacing our post handler */
 	// if (zend_hash_find(EG(ini_directives), "mbstring.encoding_translation", sizeof("mbstring.encoding_translation"), (void **) &ini_entry) == FAILURE) {
 	// 	return;
@@ -122,10 +119,10 @@ void suhosin_hook_post_handlers()
 // void suhosin_unhook_post_handlers()
 // {
 // 	zend_ini_entry *ini_entry;
-// 
+//
 // 	/* Restore to an empty destructor */
 // 	SG(known_post_content_types).pDestructor = NULL;
-// 
+//
 // 	/* Now restore the ini entry handler */
 // 	if (zend_hash_find(EG(ini_directives), "mbstring.encoding_translation", sizeof("mbstring.encoding_translation"), (void **) &ini_entry) == FAILURE) {
 // 		return;

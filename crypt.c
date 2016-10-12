@@ -41,7 +41,7 @@ static void suhosin_get_ipv4(char *buf)
 		memset(buf, 0, 4);
 		return;
 	}
-	
+
 	for (i=0; i<4; i++) {
 		if (raddr[0] == 0) {
 			buf[i] = 0;
@@ -59,11 +59,11 @@ zend_string *suhosin_encrypt_string(char *str, int len, char *var, int vlen, cha
 	int padded_len, i, slen;
 	unsigned char *crypted, *tmp;
 	unsigned int check = 0x13579BDF;
-	
+
 	if (str == NULL) {
 		return NULL;
 	}
-	
+
 	if (len == 0) {
 		return ZSTR_EMPTY_ALLOC();
 	}
@@ -86,10 +86,10 @@ zend_string *suhosin_encrypt_string(char *str, int len, char *var, int vlen, cha
 		check += check << 1;
 		check ^= (unsigned char)str[i];
 	}
-	
+
 	/* store ip value */
 	suhosin_get_ipv4((char *)crypted + 4);
-	
+
 	/* store check value */
 	crypted[8] = check & 0xff;
 	crypted[9] = (check >> 8) & 0xff;
@@ -101,7 +101,7 @@ zend_string *suhosin_encrypt_string(char *str, int len, char *var, int vlen, cha
 	crypted[13] = (len >> 8) & 0xff;
 	crypted[14] = (len >> 16) & 0xff;
 	crypted[15] = (len >> 24) & 0xff;
-	
+
 	for (i = 0, tmp = crypted; i < padded_len + 16; i += 16, tmp += 16) {
 		if (i > 0) {
 			int j;
@@ -109,7 +109,7 @@ zend_string *suhosin_encrypt_string(char *str, int len, char *var, int vlen, cha
 		}
 		suhosin_aes_encrypt((char *)tmp);
 	}
-	
+
 	zend_string *zs = php_base64_encode(crypted, padded_len+16);
 	efree(crypted);
 	// slen=strlen((char *)tmp);
@@ -129,11 +129,11 @@ zend_string *suhosin_decrypt_string(char *str, int padded_len, char *var, int vl
 	SDEBUG("decrypting string |%s|", str);
 	int i;
 	unsigned int check = 0x13579BDF;
-	
+
 	if (str == NULL) {
 		return NULL;
 	}
-	
+
 	if (padded_len == 0) {
 		return ZSTR_EMPTY_ALLOC();
 	}
@@ -146,7 +146,7 @@ zend_string *suhosin_decrypt_string(char *str, int padded_len, char *var, int vl
 			case '_': str[i]='+'; break;
 		}
 	}
-	
+
 	zend_string *decrypted_zs = php_base64_decode((unsigned char *)str, padded_len);
 	if (decrypted_zs == NULL) {
 		return NULL;
@@ -158,7 +158,7 @@ zend_string *suhosin_decrypt_string(char *str, int padded_len, char *var, int vl
 	if (len < 2*16 || (len % 16) != 0) {
 		goto error_out;
 	}
-	
+
 	unsigned char *tmp;
 	for (i = len - 16, tmp = decrypted + i; i >= 0; i -= 16, tmp -= 16) {
 		suhosin_aes_decrypt((char *)tmp);
@@ -176,7 +176,7 @@ zend_string *suhosin_decrypt_string(char *str, int padded_len, char *var, int vl
 	o_len |= decrypted[13];
 	o_len <<= 8;
 	o_len |= decrypted[12];
-	
+
 	if (o_len < 0 || o_len > len-16) {
 		goto error_out;
 	}
@@ -192,13 +192,13 @@ zend_string *suhosin_decrypt_string(char *str, int padded_len, char *var, int vl
 		check += check << 1;
 		check ^= decrypted[16+i];
 	}
-	
+
 	/* check value */
 	int invalid = (decrypted[8] != (check & 0xff)) ||
 		(decrypted[9] != ((check >> 8) & 0xff)) ||
 		(decrypted[10] != ((check >> 16) & 0xff)) ||
 		(decrypted[11] != ((check >> 24) & 0xff));
-	
+
 	/* check IP */
 	if (check_ra) {
 		if (check_ra > 4) {
@@ -210,16 +210,16 @@ zend_string *suhosin_decrypt_string(char *str, int padded_len, char *var, int vl
 			goto error_out;
 		}
 	}
-	
+
 	if (invalid) {
 		goto error_out;
 	}
-	
+
 	memmove(decrypted, decrypted+16, o_len);
 	decrypted[o_len] = 0;
 	ZSTR_LEN(decrypted_zs) = o_len;
-	/* we do not realloc() here because 16 byte less 
-	   is simply not worth the overhead */  
+	/* we do not realloc() here because 16 byte less
+	   is simply not worth the overhead */
 	return decrypted_zs;
 
 error_out:
@@ -236,21 +236,21 @@ char *suhosin_generate_key(char *key, zend_bool ua, zend_bool dr, long raddr, ch
 	char *_dr = NULL;
 	char *_ra = NULL;
 	PHP_SHA256_CTX ctx;
-	
+
 	if (ua) {
 		_ua = suhosin_getenv(ZEND_STRL("HTTP_USER_AGENT"));
 	}
-	
+
 	if (dr) {
 		_dr = suhosin_getenv(ZEND_STRL("DOCUMENT_ROOT"));
 	}
-	
+
 	if (raddr > 0) {
 		_ra = suhosin_getenv(ZEND_STRL("REMOTE_ADDR"));
 	}
-	
+
 	SDEBUG("KEY: %s - UA: %s - DR: %s - RA: %s", key,_ua,_dr,_ra);
-	
+
 	PHP_SHA256Init(&ctx);
 	if (key == NULL || *key == 0) {
 		PHP_SHA256Update(&ctx, (unsigned char*)ZEND_STRL("D3F4UL7"));
@@ -269,7 +269,7 @@ char *suhosin_generate_key(char *key, zend_bool ua, zend_bool dr, long raddr, ch
 		} else {
 			long dots = 0;
 			char *tmp = _ra;
-			
+
 			while (*tmp) {
 				if (*tmp == '.') {
 					dots++;
@@ -284,6 +284,6 @@ char *suhosin_generate_key(char *key, zend_bool ua, zend_bool dr, long raddr, ch
 	}
 	PHP_SHA256Final((unsigned char *)cryptkey, &ctx);
 	cryptkey[32] = 0; /* uhmm... not really a string */
-	
+
 	return cryptkey;
 }

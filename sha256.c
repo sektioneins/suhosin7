@@ -17,12 +17,10 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id: sha256.c $ */
-
 #include <stdio.h>
 #include "php.h"
 
-/* This code is heavily based on the PHP md5/sha1 implementations */ 
+/* This code is heavily based on the PHP md5/sha1 implementations */
 
 #include "sha256.h"
 
@@ -48,7 +46,7 @@ static PHP_FUNCTION(suhosin_sha256)
 	char sha256str[65];
 	suhosin_SHA256_CTX context;
 	unsigned char digest[32];
-	
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|b", &arg, &arg_len, &raw_output) == FAILURE) {
 		return;
 	}
@@ -141,7 +139,7 @@ static unsigned char PADDING[64] =
  */
 #define W(i) ( tmp1=ROTATE_RIGHT(x[(i-15)&15],7)^ROTATE_RIGHT(x[(i-15)&15],18)^(x[(i-15)&15] >> 3), \
 	tmp2=ROTATE_RIGHT(x[(i-2)&15],17)^ROTATE_RIGHT(x[(i-2)&15],19)^(x[(i-2)&15] >> 10), \
-	(x[i&15]=x[i&15] + tmp1 + x[(i-7)&15] + tmp2) ) 
+	(x[i&15]=x[i&15] + tmp1 + x[(i-7)&15] + tmp2) )
 
 /* ROUND function of sha256
  */
@@ -150,8 +148,8 @@ static unsigned char PADDING[64] =
  t1 = (h) + H((e)) + I((e), (f), (g)) + (k) + (php_uint32)(w); \
  (h) = F((a)) + G((a), (b), (c)) + t1; \
  (d) += t1; \
- } 
-			                    
+ }
+
 
 /* {{{ suhosin_SHA256Init
  * SHA256 initialization. Begins an SHA256 operation, writing a new context.
@@ -168,7 +166,7 @@ void suhosin_SHA256Init(suhosin_SHA256_CTX * context)
 	context->state[4] = 0x510e527f;
 	context->state[5] = 0x9b05688c;
 	context->state[6] = 0x1f83d9ab;
-	context->state[7] = 0x5be0cd19;	
+	context->state[7] = 0x5be0cd19;
 }
 /* }}} */
 
@@ -232,7 +230,7 @@ void suhosin_SHA256Final(unsigned char digest[32], suhosin_SHA256_CTX * context)
 	bits[2] = (context->count[1] >> 8) & 0xFF;
 	bits[1] = (context->count[1] >> 16) & 0xFF;
 	bits[0] = (context->count[1] >> 24) & 0xFF;
-	
+
 	/* Pad out to 56 mod 64.
 	 */
 	index = (unsigned int) ((context->count[0] >> 3) & 0x3f);
@@ -397,7 +395,7 @@ void suhosin_hook_sha256()
 	if (zend_hash_str_find(CG(function_table), ZEND_STRL("sha256"))) {
 		return;
 	}
-	
+
 	/* add the sha256 functions */
 	zend_register_functions(NULL, suhosin_sha256_functions, NULL, MODULE_PERSISTENT);
 }

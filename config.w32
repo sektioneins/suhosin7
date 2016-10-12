@@ -1,4 +1,3 @@
-// $Id$
 // vim:ft=javascript
 
 // If your extension references something external, use ARG_WITH
@@ -10,4 +9,3 @@
 if (PHP_SUHOSIN7 != "no") {
 	EXTENSION("suhosin7", "suhosin7.c", PHP_EXTNAME_SHARED, "/DZEND_ENABLE_STATIC_ACHE=1");
 }
-

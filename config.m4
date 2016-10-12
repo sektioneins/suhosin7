@@ -1,4 +1,3 @@
-dnl $Id$
 dnl config.m4 for extension suhosin7
 
 PHP_ARG_ENABLE(suhosin7, whether to enable suhosin support,

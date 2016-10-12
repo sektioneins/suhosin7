@@ -17,9 +17,6 @@
   |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
 */
-/*
-  $Id: ifilter.c,v 1.1.1.1 2007-11-28 01:15:35 sesser Exp $ 
-*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -67,12 +64,12 @@ size_t suhosin_strncspn(const char *input, size_t n, const char *reject)
 void suhosin_normalize_varname(char *varname)
 {
 	char *s=varname, *index=NULL, *indexend=NULL, *p;
-	
+
 	/* overjump leading space */
 	while (*s == ' ') {
 		s++;
 	}
-	
+
 	/* and remove it */
 	if (s != varname) {
 		memmove(varname, s, strlen(s)+1);
@@ -104,7 +101,7 @@ void suhosin_normalize_varname(char *varname)
 		}
 		indexend = strchr(index, ']');
 		indexend = indexend ? indexend + 1 : index + strlen(index);
-		
+
 		if (s != index) {
 			memmove(s, index, strlen(index)+1);
 			s += indexend-index;
@@ -117,7 +114,7 @@ void suhosin_normalize_varname(char *varname)
 			index = s;
 		} else {
 			index = NULL;
-		}	
+		}
 	}
 	*s++='\0';
 }
@@ -155,7 +152,7 @@ static void suhosin_server_strip(HashTable *arr, char *key, int klen)
 			Z_TYPE_P(zv) != IS_STRING) {
 		return;
 	}
-		
+
 	t = (unsigned char *)Z_STRVAL_P(zv);
 	// SDEBUG()
 	for (; *t; t++) {
@@ -178,7 +175,7 @@ static void suhosin_server_encode(HashTable *arr, char *key, int klen)
 			Z_TYPE_P(zv) != IS_STRING) {
 		return;
 	}
-		
+
 	unsigned char *orig = (unsigned char *)Z_STRVAL_P(zv);
 	unsigned char *t;
 	for (t = orig; *t; t++) {
@@ -186,12 +183,12 @@ static void suhosin_server_encode(HashTable *arr, char *key, int klen)
 			extra += 2;
 		}
 	}
-	
+
 	/* no extra bytes required */
 	if (extra == 0) {
 		return;
 	}
-	
+
 	size_t dest_len = t - orig + 1 + extra;
 	unsigned char dest[dest_len];
 	unsigned char *n = dest;
@@ -256,7 +253,7 @@ void suhosin_register_server_variables(zval *track_vars_array)
 	if (failure) {
 		suhosin_log(S_VARS, "Attacker tried to overwrite a superglobal through a HTTP header");
 	}
-	
+
 	if (SUHOSIN7_G(raw_cookie)) {
 		zval z;
 		ZVAL_STRING(&z, SUHOSIN7_G(raw_cookie));
@@ -269,7 +266,7 @@ void suhosin_register_server_variables(zval *track_vars_array)
 		efree(SUHOSIN7_G(decrypted_cookie));
 		SUHOSIN7_G(decrypted_cookie) = NULL;
 	}
-	
+
 	if (SUHOSIN7_G(server_encode)) {
 		/* suhosin_server_encode(svars, ZEND_STRL("argv")); */
 		suhosin_server_encode(svars, ZEND_STRL("REQUEST_URI"));
@@ -332,7 +329,7 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 			}
 			return 1;
 		}
-		
+
 	/* Drop this variable if the limit is now reached */
 	switch (arg) {
 		case PARSE_GET:
@@ -363,7 +360,7 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 			}
 			break;
 	}
-	
+
 	/* Drop this variable if it begins with whitespace which is disallowed */
 	// SDEBUG("checking '%c'", *var);
 	if (isspace(*var)) {
@@ -394,7 +391,7 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 		}
 	}
 	// else { SDEBUG("not WS");}
-	
+
 	/* Drop this variable if it exceeds the value length limit */
 	if (SUHOSIN7_G(max_value_length) && SUHOSIN7_G(max_value_length) < val_len) {
 		suhosin_log(S_VARS, "configured request variable value length limit exceeded - dropped variable '%s'", var);
@@ -420,15 +417,15 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 			}
 			break;
 	}
-	
+
 	/* Normalize the variable name */
 	suhosin_normalize_varname(var);
-	
+
 	/* Find length of variable name */
 	index = strchr(var, '[');
 	total_len = strlen(var);
 	var_len = index ? index-var : total_len;
-	
+
 	/* Drop this variable if it exceeds the varname/total length limit */
 	if (SUHOSIN7_G(max_varname_length) && SUHOSIN7_G(max_varname_length) < var_len) {
 		suhosin_log(S_VARS, "configured request variable name length limit exceeded - dropped variable '%s'", var);
@@ -470,51 +467,51 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 			}
 			break;
 	}
-	
+
 	/* Find out array depth */
 	while (index) {
 		char *index_end;
 		unsigned int index_length;
-		
+
 		/* overjump '[' */
 		index++;
-		
+
 		/* increase array depth */
 		depth++;
-				
+
 		index_end = strchr(index, ']');
 		if (index_end == NULL) {
 			index_end = index+strlen(index);
 		}
-		
+
 		index_length = index_end - index;
-		
+
 		/* max. array index length */
 		if (SUHOSIN7_G(max_array_index_length) && SUHOSIN7_G(max_array_index_length) < index_length) {
 			suhosin_log(S_VARS, "configured request variable array index length limit exceeded - dropped variable '%s'", var);
 			if (!SUHOSIN7_G(simulation)) { return 0; }
-		} 
+		}
 		switch (arg) {
 			case PARSE_GET:
 				if (SUHOSIN7_G(max_get_array_index_length) && SUHOSIN7_G(max_get_array_index_length) < index_length) {
 					suhosin_log(S_VARS, "configured GET variable array index length limit exceeded - dropped variable '%s'", var);
 					if (!SUHOSIN7_G(simulation)) { return 0; }
-				} 
+				}
 				break;
 			case PARSE_COOKIE:
 				if (SUHOSIN7_G(max_cookie_array_index_length) && SUHOSIN7_G(max_cookie_array_index_length) < index_length) {
 					suhosin_log(S_VARS, "configured COOKIE variable array index length limit exceeded - dropped variable '%s'", var);
 					if (!SUHOSIN7_G(simulation)) { return 0; }
-				} 
+				}
 				break;
 			case PARSE_POST:
 				if (SUHOSIN7_G(max_post_array_index_length) && SUHOSIN7_G(max_post_array_index_length) < index_length) {
 					suhosin_log(S_VARS, "configured POST variable array index length limit exceeded - dropped variable '%s'", var);
 					if (!SUHOSIN7_G(simulation)) { return 0; }
-				} 
+				}
 				break;
 		}
-		
+
 		/* index whitelist/blacklist */
 		if (SUHOSIN7_G(array_index_whitelist) && *(SUHOSIN7_G(array_index_whitelist))) {
 			if (suhosin_strnspn(index, index_length, SUHOSIN7_G(array_index_whitelist)) != index_length) {
@@ -527,10 +524,10 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 				if (!SUHOSIN7_G(simulation)) { return 0; }
 			}
 		}
-		
+
 		index = strchr(index, '[');
 	}
-	
+
 	/* Drop this variable if it exceeds the array depth limit */
 	if (SUHOSIN7_G(max_array_depth) && SUHOSIN7_G(max_array_depth) < depth) {
 		suhosin_log(S_VARS, "configured request variable array depth limit exceeded - dropped variable '%s'", var);
@@ -558,9 +555,9 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 	}
 
 	/* Check if variable value is truncated by a \0 */
-	
+
 	if (val && *val && val_len != strnlen(*val, val_len)) {
-	
+
 		if (SUHOSIN7_G(disallow_nul)) {
 			suhosin_log(S_VARS, "ASCII-NUL chars not allowed within request variables - dropped variable '%s'", var);
 			if (!SUHOSIN7_G(simulation)) { return 0; }
@@ -586,7 +583,7 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 				break;
 		}
 	}
-	
+
 	/* Drop this variable if it is one of GLOBALS, _GET, _POST, ... */
 	/* This is to protect several silly scripts that do globalizing themself */
 	if (suhosin_is_protected_varname(var, var_len)) {
@@ -607,7 +604,7 @@ static SAPI_INPUT_FILTER_FUNC(suhosin_input_filter)
 			SUHOSIN7_G(cur_post_vars)++;
 			break;
 	}
-	
+
 	if (new_val_len) {
 		*new_val_len = val_len;
 	}
@@ -625,7 +622,7 @@ SAPI_INPUT_FILTER_FUNC(suhosin_input_filter_wrapper)
 	// SDEBUG("ifilter arg=%d var=%s do_not_scan=%d already_scanned=%d", arg, var, SUHOSIN7_G(do_not_scan), already_scanned);
 	// SDEBUG("ifilter arg=%d var=%s do_not_scan=%d", arg, var, SUHOSIN7_G(do_not_scan));
 	SDEBUG("ifilter arg=%d var=%s", arg, var);
-	
+
 	// if (SUHOSIN7_G(do_not_scan)) {
 	// 	SDEBUG("do_not_scan");
 	// 	if (new_val_len) {
@@ -633,7 +630,7 @@ SAPI_INPUT_FILTER_FUNC(suhosin_input_filter_wrapper)
 	// 	}
 	// 	return 1;
 	// }
-	
+
 	// if (!already_scanned) {
 		if (suhosin_input_filter(arg, var, val, val_len, new_val_len) == 0) {
 			SUHOSIN7_G(abort_request)=1;

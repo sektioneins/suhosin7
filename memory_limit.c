@@ -16,9 +16,6 @@
   | Author: Stefan Esser <sesser@sektioneins.de> and others              |
   +----------------------------------------------------------------------+
 */
-/*
-  $Id: memory_limit.c $ 
-*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -84,7 +81,7 @@ void suhosin_hook_memory_limit()
 		/* replace OnUpdateMemoryLimit handler */
 		ini_entry->on_modify = suhosin_OnChangeMemoryLimit;
 	}
-	
+
 }
 
 

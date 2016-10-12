@@ -17,8 +17,6 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id: suhosin_rfc1867.h,v 1.1.1.1 2007-11-28 01:15:35 sesser Exp $ */
-
 #ifndef SUHOSIN_RFC1867_H
 #define SUHOSIN_RFC1867_H
 
@@ -37,11 +35,11 @@
 // #define MULTIPART_EVENT_FILE_DATA	3
 // #define MULTIPART_EVENT_FILE_END	4
 // #define MULTIPART_EVENT_END		5
-// 
+//
 // typedef struct _multipart_event_start {
 // 	size_t	content_length;
 // } multipart_event_start;
-// 
+//
 // typedef struct _multipart_event_formdata {
 // 	size_t	post_bytes_processed;
 // 	char	*name;
@@ -49,13 +47,13 @@
 // 	size_t	length;
 // 	size_t	*newlength;
 // } multipart_event_formdata;
-// 
+//
 // typedef struct _multipart_event_file_start {
 // 	size_t	post_bytes_processed;
 // 	char	*name;
 // 	char	**filename;
 // } multipart_event_file_start;
-// 
+//
 // typedef struct _multipart_event_file_data {
 // 	size_t	post_bytes_processed;
 // 	zend_off_t	offset;
@@ -63,20 +61,20 @@
 // 	size_t	length;
 // 	size_t	*newlength;
 // } multipart_event_file_data;
-// 
+//
 // typedef struct _multipart_event_file_end {
 // 	size_t	post_bytes_processed;
 // 	char	*temp_filename;
 // 	int	cancel_upload;
 // } multipart_event_file_end;
-// 
+//
 // typedef struct _multipart_event_end {
 // 	size_t	post_bytes_processed;
 // } multipart_event_end;
-// 
-// 
+//
+//
 // #endif
-// 
+//
 int suhosin_rfc1867_filter(unsigned int event, void *event_data, void **extra);
 
 SAPI_POST_HANDLER_FUNC(suhosin_rfc1867_post_handler);

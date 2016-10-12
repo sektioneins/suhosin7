@@ -16,8 +16,6 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id$ */
-
 #pragma once
 
 extern zend_module_entry suhosin7_module_entry;
@@ -56,7 +54,7 @@ extern zend_module_entry suhosin7_module_entry;
 	{FILE *f;f=fopen(SUHOSIN_LOG, "a+");if(f){fprintf(f,"[%u] %s:%u %s #> ",getpid(), __FILE__, __LINE__, __func__);fprintf(f, msg);fprintf(f,"\n");fclose(f);}}
 #else
 #define SDEBUG(msg...)
-#endif    
+#endif
 #endif
 
 /* -------------- */
@@ -128,13 +126,13 @@ protected_varname:
 
 ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool	protectkey;
-	
+
 	zend_bool	simulation;
 	// zend_bool stealth;
 	// zend_bool	already_scanned;
 	zend_bool	abort_request;
-	// 
-	
+	//
+
 	/* executor */
 	zend_ulong in_code_type;
 	zend_bool executor_allow_symlink;
@@ -203,7 +201,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_long  max_post_array_index_length;
 	zend_bool  disallow_post_nul;
 	zend_bool  disallow_post_ws;
-	
+
 /*	fileupload */
 	zend_long  upload_max_newlines;
 	zend_long  upload_limit;
@@ -235,7 +233,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	BYTE fi[24],ri[24];
 	WORD fkey[120];
 	WORD rkey[120];
-	
+
 	zend_bool	session_encrypt;
 	char*	session_cryptkey;
 	zend_bool	session_cryptua;
@@ -260,10 +258,10 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_bool	coredump;
 	// zend_bool	apc_bug_workaround;
 	// zend_bool       do_not_scan;
-	// 
+	//
 	zend_bool	server_encode;
 	zend_bool	server_strip;
-	// 
+	//
 	zend_bool	disable_display_errors;
 
 	/* random number generator */
@@ -275,11 +273,11 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	php_uint32   mt_state[625];
 	php_uint32   *mt_next;
 	int          mt_left;
-	
+
 	char         *seedingkey;
 	zend_bool    reseed_every_request;
-	// 
-	zend_bool r_is_seeded; 
+	//
+	zend_bool r_is_seeded;
 	zend_bool mt_is_seeded;
 
 
@@ -287,7 +285,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	zend_long	memory_limit;
 	zend_long 	hard_memory_limit;
 
-	
+
 
 
 	/* PERDIR Handling */
@@ -333,7 +331,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin7)
 	// long sql_opencomment;
 	// long sql_union;
 	// long sql_mselect;
-	
+
 	// int (*old_php_body_write)(const char *str, unsigned int str_length);
 
 ZEND_END_MODULE_GLOBALS(suhosin7)

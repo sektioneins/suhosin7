@@ -17,9 +17,6 @@
   |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
 */
-/*
-  $Id: session.c,v 1.1.1.1 2007-11-28 01:15:35 sesser Exp $ 
-*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -59,8 +56,8 @@ static void suhosin_send_cookie()
 	int  * session_send_cookie = &SESSION_G(send_cookie);
 	char * base;
 	zend_ini_entry *ini_entry;
-	
-	/* The following is requires to be 100% compatible to PHP 
+
+	/* The following is requires to be 100% compatible to PHP
 	   versions where the hash extension is not available by default */
 	if ((ini_entry = zend_hash_str_find_ptr(EG(ini_directives), ZEND_STRL("session.hash_bits_per_character"))) != NULL) {
 #ifndef ZTS
@@ -81,12 +78,12 @@ static int (*old_SessionRINIT)(INIT_FUNC_ARGS) = NULL;
 static int suhosin_hook_s_read(PS_READ_ARGS)
 {
 	zend_string *new_key = key;
-	
+
 	/* protect session vars */
 /*  if (SESSION_G(http_session_vars) && SESSION_G(http_session_vars)->type == IS_ARRAY) {
 		SESSION_G(http_session_vars)->refcount++;
 	}*/
-	
+
 	/* protect dumb session handlers */
 	if (COND_DUMB_SH) {
 regenerate:
@@ -105,10 +102,10 @@ regenerate:
 
 	if (r == SUCCESS && SUHOSIN7_G(session_encrypt) && val != NULL && *val != NULL && ZSTR_LEN(*val)) {
 		char cryptkey[33];
-	
+
 		// SUHOSIN7_G(do_not_scan) = 1;
 		S7_GENERATE_KEY(session, cryptkey);
-		
+
 		zend_string *orig_val = *val;
 		*val = suhosin_decrypt_string(ZSTR_VAL(*val), ZSTR_LEN(*val), "", 0, (char *)cryptkey, SUHOSIN7_G(session_checkraddr));
 		// SUHOSIN7_G(do_not_scan) = 0;
@@ -117,7 +114,7 @@ regenerate:
 		}
 		zend_string_release(orig_val);
 	}
-	
+
 	return r;
 }
 
@@ -132,7 +129,7 @@ static int suhosin_hook_s_write(PS_WRITE_ARGS)
 		char cryptkey[33];
 		// SUHOSIN7_G(do_not_scan) = 1;
 		S7_GENERATE_KEY(session, cryptkey);
-		
+
 		zend_string *v = suhosin_encrypt_string(ZSTR_VAL(val), ZSTR_LEN(val), "", 0, cryptkey);
 
 		// SUHOSIN7_G(do_not_scan) = 0;
@@ -140,7 +137,7 @@ static int suhosin_hook_s_write(PS_WRITE_ARGS)
 	}
 
 	return SUHOSIN7_G(old_s_write)(mod_data, key, val, maxlifetime);
-	
+
 // return_write:
 	/* protect session vars */
 /*  if (SESSION_G(http_session_vars) && SESSION_G(http_session_vars)->type == IS_ARRAY) {
@@ -163,7 +160,7 @@ static int suhosin_hook_s_destroy(PS_DESTROY_ARGS)
 	if (COND_DUMB_SH) {
 		return FAILURE;
 	}
-	
+
 	return SUHOSIN7_G(old_s_destroy)(mod_data, key);
 }
 
@@ -171,7 +168,7 @@ static void suhosin_hook_session_module()
 {
 	ps_module *old_mod = SESSION_G(mod);
 	ps_module *mod;
-	
+
 	if (old_mod == NULL || SUHOSIN7_G(s_module) == old_mod) {
 		return;
 	}
@@ -182,19 +179,19 @@ static void suhosin_hook_session_module()
 			return;
 		}
 	}
-	
+
 	SUHOSIN7_G(s_original_mod) = old_mod;
-	
+
 	mod = SUHOSIN7_G(s_module);
 	memcpy(mod, old_mod, sizeof(ps_module));
-	
+
 	SUHOSIN7_G(old_s_read) = mod->s_read;
 	mod->s_read = suhosin_hook_s_read;
 	SUHOSIN7_G(old_s_write) = mod->s_write;
 	mod->s_write = suhosin_hook_s_write;
 	SUHOSIN7_G(old_s_destroy) = mod->s_destroy;
 	mod->s_destroy = suhosin_hook_s_destroy;
-	
+
 	SESSION_G(mod) = mod;
 }
 
@@ -211,7 +208,7 @@ static PHP_INI_MH(suhosin_OnUpdateSaveHandler)
 	SESSION_G(mod) = SUHOSIN7_G(s_original_mod);
 
 	int r = old_OnUpdateSaveHandler(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
-	
+
 	suhosin_hook_session_module();
 
 	return r;
@@ -234,7 +231,7 @@ static int suhosin_hook_session_RINIT(INIT_FUNC_ARGS)
 void suhosin_hook_session()
 {
 	zend_module_entry *module;
-	
+
 	if ((module = zend_hash_str_find_ptr(&module_registry, ZEND_STRL("session"))) == NULL) {
 		return;
 	}
@@ -248,15 +245,15 @@ void suhosin_hook_session()
 	session_globals = module->globals_ptr;
 	}
 #endif
-	
+
 	if (old_OnUpdateSaveHandler != NULL) {
 		return;
 	}
-	
+
 	/* hook request startup function of session module */
 	old_SessionRINIT = module->request_startup_func;
 	module->request_startup_func = suhosin_hook_session_RINIT;
-	
+
 	/* retrieve pointer to session.save_handler ini entry */
 	zend_ini_entry *ini_entry;
 	if ((ini_entry = zend_hash_str_find_ptr(EG(ini_directives), ZEND_STRL("session.save_handler"))) != NULL) {
@@ -282,14 +279,14 @@ void suhosin_hook_session()
 // 	if (old_OnUpdateSaveHandler == NULL) {
 // 		return;
 // 	}
-// 		
+//
 // 	/* retrieve pointer to session.save_handler ini entry */
 // 	zend_ini_entry *ini_entry;
 // 	if ((ini_entry = zend_hash_find(EG(ini_directives), ZEND_STRL("session.save_handler"))) == NULL) {
 // 		return;
 // 	}
 // 	ini_entry->on_modify = old_OnUpdateSaveHandler;
-// 	old_OnUpdateSaveHandler = NULL; 
+// 	old_OnUpdateSaveHandler = NULL;
 // }
 
 #else /* HAVE_PHP_SESSION */

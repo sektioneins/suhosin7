@@ -2,7 +2,7 @@
 
    Written by Mike Scott 21st April 1999
    mike@compapp.dcu.ie
-   An alternative faster version is implemented in MIRACL 
+   An alternative faster version is implemented in MIRACL
    ftp://ftp.computing.dcu.ie/pub/crypto/miracl.zip
 
    Copyright (c) 1999 Mike Scott
@@ -18,15 +18,15 @@
    See rijndael documentation. The code follows the documentation as closely
    as possible, and where possible uses the same function and variable names.
 
-   Permission for free direct or derivative use is granted subject 
-   to compliance with any conditions that the originators of the 
-   algorithm place on its exploitation.  
+   Permission for free direct or derivative use is granted subject
+   to compliance with any conditions that the originators of the
+   algorithm place on its exploitation.
 
    Inspiration from Brian Gladman's implementation is acknowledged.
 
    Written for clarity, rather than speed.
    Assumes long is 32 bit quantity.
-   Full implementation. 
+   Full implementation.
    Endian indifferent.
 */
 
@@ -95,14 +95,14 @@ static WORD SubByte(WORD a)
     b[1]=fbsub[b[1]];
     b[2]=fbsub[b[2]];
     b[3]=fbsub[b[3]];
-    return pack(b);    
+    return pack(b);
 }
 
 static BYTE product(WORD x,WORD y)
 { /* dot product of two 4-byte arrays */
     BYTE xb[4],yb[4];
     unpack(x,xb);
-    unpack(y,yb); 
+    unpack(y,yb);
     return bmul(xb[0],yb[0])^bmul(xb[1],yb[1])^bmul(xb[2],yb[2])^bmul(xb[3],yb[3]);
 }
 
@@ -143,13 +143,13 @@ void suhosin_aes_gentables()
 
     ltab[0]=0;
     ptab[0]=1;  ltab[1]=0;
-    ptab[1]=3;  ltab[3]=1; 
+    ptab[1]=3;  ltab[3]=1;
     for (i=2;i<256;i++)
     {
         ptab[i]=ptab[i-1]^xtime(ptab[i-1]);
         ltab[ptab[i]]=i;
     }
-    
+
   /* affine transformation:- each bit is xored with itself shifted one bit */
 
     fbsub[0]=0x63;
@@ -212,7 +212,7 @@ void suhosin_aes_gkey(int nb,int nk,char *key)
     }
 
     N=Nb*(Nr+1);
-    
+
     for (i=j=0;i<Nk;i++,j+=4)
     {
         CipherKey[i]=pack((BYTE *)&key[j]);
@@ -239,7 +239,7 @@ void suhosin_aes_gkey(int nb,int nk,char *key)
 
  /* now for the expanded decrypt key in reverse order */
 
-    for (j=0;j<Nb;j++) SUHOSIN7_G(rkey)[j+N-Nb]=SUHOSIN7_G(fkey)[j]; 
+    for (j=0;j<Nb;j++) SUHOSIN7_G(rkey)[j+N-Nb]=SUHOSIN7_G(fkey)[j];
     for (i=Nb;i<N-Nb;i+=Nb)
     {
         k=N-Nb-i;
@@ -251,7 +251,7 @@ void suhosin_aes_gkey(int nb,int nk,char *key)
 
 /* There is an obvious time/space trade-off possible here.     *
  * Instead of just one ftable[], I could have 4, the other     *
- * 3 pre-rotated to save the ROTL8, ROTL16 and ROTL24 overhead */ 
+ * 3 pre-rotated to save the ROTL8, ROTL16 and ROTL24 overhead */
 
 void suhosin_aes_encrypt(char *buff)
 {
@@ -270,7 +270,7 @@ void suhosin_aes_encrypt(char *buff)
     for (i=1;i<Nr;i++)
     { /* Nr is number of rounds. May be odd. */
 
-/* if Nb is fixed - unroll this next 
+/* if Nb is fixed - unroll this next
    loop and hard-code in the values of fi[]  */
 
         for (m=j=0;j<Nb;j++,m+=3)
@@ -284,14 +284,14 @@ void suhosin_aes_encrypt(char *buff)
         t=x; x=y; y=t;      /* swap pointers */
     }
 
-/* Last Round - unroll if possible */ 
+/* Last Round - unroll if possible */
     for (m=j=0;j<Nb;j++,m+=3)
     {
         y[j]=SUHOSIN7_G(fkey)[k++]^(WORD)fbsub[(BYTE)x[j]]^
              ROTL8((WORD)fbsub[(BYTE)(x[SUHOSIN7_G(fi)[m]]>>8)])^
              ROTL16((WORD)fbsub[(BYTE)(x[SUHOSIN7_G(fi)[m+1]]>>16)])^
              ROTL24((WORD)fbsub[x[SUHOSIN7_G(fi)[m+2]]>>24]);
-    }   
+    }
     for (i=j=0;i<Nb;i++,j+=4)
     {
         unpack(y[i],(BYTE *)&buff[j]);
@@ -317,7 +317,7 @@ void suhosin_aes_decrypt(char *buff)
     for (i=1;i<Nr;i++)
     { /* Nr is number of rounds. May be odd. */
 
-/* if Nb is fixed - unroll this next 
+/* if Nb is fixed - unroll this next
    loop and hard-code in the values of ri[]  */
 
         for (m=j=0;j<Nb;j++,m+=3)
@@ -330,14 +330,14 @@ void suhosin_aes_decrypt(char *buff)
         t=x; x=y; y=t;      /* swap pointers */
     }
 
-/* Last Round - unroll if possible */ 
+/* Last Round - unroll if possible */
     for (m=j=0;j<Nb;j++,m+=3)
     {
         y[j]=SUHOSIN7_G(rkey)[k++]^(WORD)rbsub[(BYTE)x[j]]^
              ROTL8((WORD)rbsub[(BYTE)(x[SUHOSIN7_G(ri)[m]]>>8)])^
              ROTL16((WORD)rbsub[(BYTE)(x[SUHOSIN7_G(ri)[m+1]]>>16)])^
              ROTL24((WORD)rbsub[x[SUHOSIN7_G(ri)[m+2]]>>24]);
-    }        
+    }
     for (i=j=0;i<Nb;i++,j+=4)
     {
         unpack(y[i],(BYTE *)&buff[j]);
@@ -362,7 +362,7 @@ static int main()
 
     for (nb=4;nb<=8;nb+=2)
         for (nk=4;nk<=8;nk+=2)
-    {  
+    {
         printf("\nBlock Size= %d bits, Key Size= %d bits\n",nb*32,nk*32);
         gkey(nb,nk,key);
         printf("Plain=   ");

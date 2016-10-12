@@ -17,9 +17,6 @@
   |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
 */
-/*
-  $Id: treat_data.c $ 
-*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -38,19 +35,19 @@ SAPI_TREAT_DATA_FUNC(suhosin_treat_data)
 {
 	switch (arg) {
 		case PARSE_POST:
-			if (SUHOSIN7_G(max_request_variables) && (SUHOSIN7_G(max_post_vars) == 0 || 
+			if (SUHOSIN7_G(max_request_variables) && (SUHOSIN7_G(max_post_vars) == 0 ||
 				SUHOSIN7_G(max_request_variables) <= SUHOSIN7_G(max_post_vars))) {
 				SUHOSIN7_G(max_post_vars) = SUHOSIN7_G(max_request_variables);
 			}
 			break;
 		case PARSE_GET:
-			if (SUHOSIN7_G(max_request_variables) && (SUHOSIN7_G(max_get_vars) == 0 || 
+			if (SUHOSIN7_G(max_request_variables) && (SUHOSIN7_G(max_get_vars) == 0 ||
 				SUHOSIN7_G(max_request_variables) <= SUHOSIN7_G(max_get_vars))) {
 				SUHOSIN7_G(max_get_vars) = SUHOSIN7_G(max_request_variables);
 			}
 			break;
 		case PARSE_COOKIE:
-			if (SUHOSIN7_G(max_request_variables) && (SUHOSIN7_G(max_cookie_vars) == 0 || 
+			if (SUHOSIN7_G(max_request_variables) && (SUHOSIN7_G(max_cookie_vars) == 0 ||
 				SUHOSIN7_G(max_request_variables) <= SUHOSIN7_G(max_cookie_vars))) {
 				SUHOSIN7_G(max_cookie_vars) = SUHOSIN7_G(max_request_variables);
 			}
@@ -60,7 +57,7 @@ SAPI_TREAT_DATA_FUNC(suhosin_treat_data)
 	if (arg == PARSE_COOKIE && SUHOSIN7_G(cookie_encrypt) && SG(request_info).cookie_data) {
 		SG(request_info).cookie_data = suhosin_cookie_decryptor(SG(request_info).cookie_data);
 	}
-	
+
 	if (orig_treat_data) {
 		orig_treat_data(arg, str, destArray);
 	}

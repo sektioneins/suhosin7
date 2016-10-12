@@ -44,7 +44,7 @@
 
 	Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
 	Copyright (C) 2000 - 2003, Richard J. Wagner
-	All rights reserved.                          
+	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions
@@ -57,8 +57,8 @@
 	   notice, this list of conditions and the following disclaimer in the
 	   documentation and/or other materials provided with the distribution.
 
-	3. The names of its contributors may not be used to endorse or promote 
-	   products derived from this software without specific prior written 
+	3. The names of its contributors may not be used to endorse or promote
+	   products derived from this software without specific prior written
 	   permission.
 
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -187,14 +187,14 @@ static php_uint32 suhosin_mt_rand()
 {
 	/* Pull a 32-bit integer from the generator state
 	   Every other access function simply transforms the numbers extracted here */
-	
+
 	register php_uint32 s1;
 
 	if (SUHOSIN7_G(mt_left) == 0) {
 		suhosin_mt_reload(SUHOSIN7_G(mt_state), &SUHOSIN7_G(mt_next), &SUHOSIN7_G(mt_left));
 	}
 	--SUHOSIN7_G(mt_left);
-		
+
 	s1 = *SUHOSIN7_G(mt_next)++;
 	s1 ^= (s1 >> 11);
 	s1 ^= (s1 <<  7) & 0x9d2c5680U;
@@ -263,7 +263,7 @@ static void SUHOSIN7_Gen_entropy(php_uint32 *entropybuf)
  */
 static void suhosin_srand_auto()
 {
-	php_uint32 seed[8];    
+	php_uint32 seed[8];
 	SUHOSIN7_Gen_entropy(&seed[0]);
 
 	suhosin_mt_init_by_array(seed, 8, SUHOSIN7_G(r_state));
@@ -278,7 +278,7 @@ static void suhosin_srand_auto()
  */
 static void suhosin_mt_srand_auto()
 {
-	php_uint32 seed[8];    
+	php_uint32 seed[8];
 	SUHOSIN7_Gen_entropy(&seed[0]);
 
 	suhosin_mt_init_by_array(seed, 8, SUHOSIN7_G(mt_state));
@@ -309,14 +309,14 @@ static php_uint32 suhosin_rand()
 {
 	/* Pull a 32-bit integer from the generator state
 	   Every other access function simply transforms the numbers extracted here */
-	
+
 	register php_uint32 s1;
 
 	if (SUHOSIN7_G(r_left) == 0) {
 		suhosin_mt_reload(SUHOSIN7_G(r_state), &SUHOSIN7_G(r_next), &SUHOSIN7_G(r_left));
 	}
 	--SUHOSIN7_G(r_left);
-		
+
 	s1 = *SUHOSIN7_G(r_next)++;
 	s1 ^= (s1 >> 11);
 	s1 ^= (s1 <<  7) & 0x9d2c5680U;
@@ -334,7 +334,7 @@ S7_IH_FUNCTION(srand)
 		SUHOSIN7_G(r_is_seeded) = 0;
 		return 1;
 	}
-	
+
 	if (zend_parse_parameters(argc, "|l", &seed) == FAILURE) {
 		return 1;
 	}
@@ -356,7 +356,7 @@ S7_IH_FUNCTION(mt_srand)
 		SUHOSIN7_G(mt_is_seeded) = 0;
 		return 1;
 	}
-	
+
 	if (zend_parse_parameters(argc, "|l", &seed) == FAILURE) {
 		return 1;
 	}
@@ -377,7 +377,7 @@ S7_IH_FUNCTION(mt_rand)
 	long number;
 
 	if (argc != 0 && zend_parse_parameters(argc, "ll", &min, &max) == FAILURE) {
-	    return (1);        
+	    return (1);
 	}
 
 	if (!SUHOSIN7_G(mt_is_seeded)) {
@@ -401,7 +401,7 @@ S7_IH_FUNCTION(rand)
 	long number;
 
 	if (argc != 0 && zend_parse_parameters(argc, "ll", &min, &max) == FAILURE) {
-	    return (1);        
+	    return (1);
 	}
 
 	if (!SUHOSIN7_G(r_is_seeded)) {

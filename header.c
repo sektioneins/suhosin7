@@ -17,9 +17,6 @@
   |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
 */
-/*
-  $Id: header.c,v 1.1.1.1 2007-11-28 01:15:35 sesser Exp $ 
-*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,9 +38,9 @@ static int suhosin_header_handler(sapi_header_struct *sapi_header, sapi_header_o
 	if (op != SAPI_HEADER_ADD && op != SAPI_HEADER_REPLACE) {
 		goto suhosin_skip_header_handling;
 	}
-	
+
 	if (sapi_header && sapi_header->header) {
-	
+
 		char *tmp = sapi_header->header;
 
 		for (int i = 0; i < sapi_header->header_len; i++, tmp++) {
@@ -55,7 +52,7 @@ static int suhosin_header_handler(sapi_header_struct *sapi_header, sapi_header_o
 			}
 			if (SUHOSIN7_G(allow_multiheader)) {
 				continue;
-			} else if ((tmp[0] == '\r' && (tmp[1] != '\n' || i == 0)) || 
+			} else if ((tmp[0] == '\r' && (tmp[1] != '\n' || i == 0)) ||
 			   (tmp[0] == '\n' && (i == sapi_header->header_len-1 || i == 0 || (tmp[1] != ' ' && tmp[1] != '\t')))) {
 				suhosin_log(S_MISC, "%s() - wanted to send multiple HTTP headers at once", suhosin_get_active_function_name());
 				if (!SUHOSIN7_G(simulation)) {
@@ -99,8 +96,8 @@ static int suhosin_header_handler(sapi_header_struct *sapi_header, sapi_header_o
 		}
 		vlen = end-value;
 
-		zend_string *zs_val = suhosin_encrypt_single_cookie(name, nlen, value, vlen, (char *)cryptkey); 
-		
+		zend_string *zs_val = suhosin_encrypt_single_cookie(name, nlen, value, vlen, (char *)cryptkey);
+
 		len = sizeof("Set-Cookie: ")-1 + nlen + 1 + ZSTR_LEN(zs_val) + rend-end;
 		tmp = emalloc(len + 1);
 		tlen = sprintf(tmp, "Set-Cookie: %.*s=%s", nlen, name, ZSTR_VAL(zs_val));

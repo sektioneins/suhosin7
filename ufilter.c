@@ -17,9 +17,6 @@
   |          Ben Fuhrmannek <ben.fuhrmannek@sektioneins.de>              |
   +----------------------------------------------------------------------+
 */
-/*
-  $Id: ufilter.c,v 1.1.1.1 2007-11-28 01:15:35 sesser Exp $
-*/
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -108,7 +108,7 @@ static zend_always_inline int php_valid_var_name(char *var_name, size_t var_name
 	if (suhosin_is_protected_varname(var_name, var_name_len)) {
 		return 0;
 	}
-	
+
 	return 1;
 }
 

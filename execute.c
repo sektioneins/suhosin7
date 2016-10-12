@@ -17,7 +17,6 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id: execute.c,v 1.1.1.1 2007-11-28 01:15:35 sesser Exp $ */
 // #if 0
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -90,13 +89,13 @@ static int match_include_list(HashTable *ht, char *s, size_t slen)
 	h2 = h2 == NULL ? NULL : h2 + 4;
 	char *t = h = (h == NULL) ? h2 : ( (h2 == NULL) ? h : ( (h <= h2) ? h : h2 ) );
 	if (h == NULL) return -1; // no URL
-	
+
 	while (t > s && (isalnum(t[-1]) || t[-1]=='_' || t[-1]=='.')) {
 		t--;
 	}
-	
+
 	size_t tlen = slen - (t - s);
-	
+
 	zend_ulong num_key;
 	zend_string *key;
 	ZEND_HASH_FOREACH_KEY(ht, num_key, key) {
@@ -137,7 +136,7 @@ static int suhosin_check_filename(char *s, int slen)
 	char fname[MAXPATHLEN+1];
 
 	memcpy(fname, s, slen);
-	fname[slen] = 0; 
+	fname[slen] = 0;
 	s = (char *)fname;
 	char *e = s + slen;
 
@@ -145,7 +144,7 @@ static int suhosin_check_filename(char *s, int slen)
 	if (slen != strlen(s)) {
 		return SUHOSIN_CODE_TYPE_0FILE;
 	}
-	
+
 	SDEBUG("fn=%s", s);
 	/* disallow uploaded files */
 	if (SG(rfc1867_uploaded_files)) {
@@ -153,7 +152,7 @@ static int suhosin_check_filename(char *s, int slen)
 			return SUHOSIN_CODE_TYPE_UPLOADED;
 		}
 	}
-		
+
 	/* count number of directory traversals */
 	int traversal_conut = 0;
 	for (int i = 0; i < slen-3; i++) {
@@ -165,7 +164,7 @@ static int suhosin_check_filename(char *s, int slen)
 	if (SUHOSIN7_G(executor_include_max_traversal) && traversal_conut > SUHOSIN7_G(executor_include_max_traversal)) {
 		return SUHOSIN_CODE_TYPE_MANYDOTS;
 	}
-	
+
 	SDEBUG("include wl=%p bl=%p", SUHOSIN7_G(include_whitelist), SUHOSIN7_G(include_blacklist));
 	/* no black or whitelist then disallow all */
 	if (SUHOSIN7_G(include_whitelist) == NULL && SUHOSIN7_G(include_blacklist) == NULL) {
@@ -184,7 +183,7 @@ static int suhosin_check_filename(char *s, int slen)
 			}
 		}
 	}
-	
+
 check_filename_skip_lists:
 
 	/* disallow writable files */
@@ -211,7 +210,7 @@ static void suhosin_check_codetype(zend_ulong code_type, char *filename)
 				}
 			}
 			break;
-			
+
 		// case SUHOSIN_CODE_TYPE_REGEXP:
 		//     if (SUHOSIN7_G(executor_disable_emod)) {
 		// 	    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of preg_replace() with /e modifier is forbidden by configuration");
@@ -220,7 +219,7 @@ static void suhosin_check_codetype(zend_ulong code_type, char *filename)
 		// 	    }
 		//     }
 		//     break;
-			
+
 		case SUHOSIN_CODE_TYPE_MBREGEXP:
 			if (SUHOSIN7_G(executor_disable_emod)) {
 				suhosin_log(S_EXECUTOR|S_GETCALLER, "use of /e modifier in replace function is forbidden by configuration");
@@ -229,13 +228,13 @@ static void suhosin_check_codetype(zend_ulong code_type, char *filename)
 				}
 			}
 			break;
-		
+
 		case SUHOSIN_CODE_TYPE_ASSERT:
 			break;
-		
+
 		case SUHOSIN_CODE_TYPE_CFUNC:
 			break;
-		
+
 		case SUHOSIN_CODE_TYPE_LONGNAME:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename is too long: %s", filename);
 			suhosin_bailout();
@@ -245,27 +244,27 @@ static void suhosin_check_codetype(zend_ulong code_type, char *filename)
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename contains too many '../': %s", filename);
 			suhosin_bailout();
 			break;
-		
+
 		case SUHOSIN_CODE_TYPE_UPLOADED:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename is an uploaded file");
 			suhosin_bailout();
 			break;
-			
+
 		case SUHOSIN_CODE_TYPE_0FILE:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename contains an ASCIIZ character");
 			suhosin_bailout();
 			break;
-			
+
 		case SUHOSIN_CODE_TYPE_WRITABLE:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Include filename is writable by PHP process: %s", filename);
 			suhosin_bailout();
-			break;		    	
+			break;
 
 		case SUHOSIN_CODE_TYPE_BLACKURL:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Included URL is blacklisted: %s", filename);
 			suhosin_bailout();
 			break;
-			
+
 		case SUHOSIN_CODE_TYPE_BADURL:
 			suhosin_log(S_INCLUDE|S_GETCALLER, "Included URL is not allowed: %s", filename);
 			suhosin_bailout();
@@ -295,11 +294,11 @@ static void suhosin_check_codetype(zend_ulong code_type, char *filename)
 
 ZEND_API static int (*old_zend_stream_open)(const char *filename, zend_file_handle *handle) = NULL;
 
-// 
+//
 ZEND_API static int suhosin_zend_stream_open(const char *filename, zend_file_handle *handle)
 {
 	zend_execute_data *execute_data = EG(current_execute_data);
-	
+
 	if ((execute_data != NULL) && (execute_data->opline != NULL) && (execute_data->opline->opcode == ZEND_INCLUDE_OR_EVAL)) {
 		int filetype = suhosin_check_filename((char *)filename, strlen(filename));
 		suhosin_check_codetype(filetype, (char*)filename);
@@ -319,11 +318,11 @@ static inline int suhosin_detect_codetype(zend_op_array *op_array)
 
 	/* eval, assert, create_function, mb_ereg_replace  */
 	if (op_array->type == ZEND_EVAL_CODE) {
-	
+
 		if (s == NULL) {
 			return SUHOSIN_CODE_TYPE_UNKNOWN;
 		}
-	
+
 		if (strstr(s, "eval()'d code") != NULL) {
 			return SUHOSIN_CODE_TYPE_EVAL;
 		}
@@ -343,7 +342,7 @@ static inline int suhosin_detect_codetype(zend_op_array *op_array)
 		if (strstr(s, "runtime-created function") != NULL) {
 			return SUHOSIN_CODE_TYPE_CFUNC;
 		}
-		
+
 		if (strstr(s, "Command line code") != NULL) {
 			return SUHOSIN_CODE_TYPE_COMMANDLINE;
 		}
@@ -359,17 +358,17 @@ static inline int suhosin_detect_codetype(zend_op_array *op_array)
 		if (strstr(s, "Command line end code") != NULL) {
 			return SUHOSIN_CODE_TYPE_COMMANDLINE;
 		}
-		
+
 		if (strstr(s, "suhosin internal code") != NULL) {
 			return SUHOSIN_CODE_TYPE_SUHOSIN;
 		}
-		
+
 	} else {
 
 		return suhosin_check_filename(s, strlen(s));
 
 	}
-	
+
 	return SUHOSIN_CODE_TYPE_UNKNOWN;
 }
 
@@ -384,19 +383,19 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		old_execute_ex(execute_data);
 		return;
 	}
-	
+
 	zend_op_array *new_op_array;
 	int op_array_type;//, len;
 	// char *fn;
 	zval cs;
 	zend_ulong orig_code_type;
 	unsigned long *suhosin_flags = NULL;
-	
+
 	/* log variable dropping statistics */
 	if (SUHOSIN7_G(abort_request)) {
-		
+
 		SUHOSIN7_G(abort_request) = 0; /* we only want this to happen the first time */
-		
+
 		if (SUHOSIN7_G(att_request_variables)-SUHOSIN7_G(cur_request_variables) > 0) {
 			suhosin_log(S_VARS, "dropped %u request variables - (%u in GET, %u in POST, %u in COOKIE)",
 			SUHOSIN7_G(att_request_variables)-SUHOSIN7_G(cur_request_variables),
@@ -404,33 +403,33 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 			SUHOSIN7_G(att_post_vars)-SUHOSIN7_G(cur_post_vars),
 			SUHOSIN7_G(att_cookie_vars)-SUHOSIN7_G(cur_cookie_vars));
 		}
-	
+
 		// if (!SUHOSIN7_G(simulation) && SUHOSIN7_G(filter_action)) {
-		// 
+		//
 		// 	char *action = SUHOSIN7_G(filter_action);
 		// 	long code = -1;
-		// 		
+		//
 		// 	while (*action == ' ' || *action == '\t') action++;
-		// 
+		//
 		// 	if (*action >= '0' && *action <= '9') {
 		// 		char *end = action;
 		// 		while (*end && *end != ',' && *end != ';') end++;
 		// 		code = zend_atoi(action, end-action);
 		// 		action = end;
 		// 	}
-		// 
+		//
 		// 	while (*action == ' ' || *action == '\t' || *action == ',' || *action == ';') action++;
-		// 
+		//
 		// 	if (*action) {
-		// 	
+		//
 		// 		if (strncasecmp("http://", action, sizeof("http://")-1)==0
 		// 		|| strncasecmp("https://", action, sizeof("https://")-1)==0) {
 		// 			sapi_header_line ctr = {0};
-		// 		
+		//
 		// 			if (code == -1) {
 		// 				code = 302;
 		// 			}
-		// 		
+		//
 		// 			ctr.line_len = spprintf(&ctr.line, 0, "Location: %s", action);
 		// 			ctr.response_code = code;
 		// 			sapi_header_op(SAPI_HEADER_REPLACE, &ctr);
@@ -439,11 +438,11 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		// 			zend_file_handle file_handle;
 		// 			zend_op_array *new_op_array;
 		// 			zval *result = NULL;
-		// 		
+		//
 		// 			if (code == -1) {
 		// 				code = 200;
 		// 			}
-		// 		
+		//
 		// 			if (zend_stream_open(action, &file_handle) == SUCCESS) {
 		// 				if (!file_handle.opened_path) {
 		// 					file_handle.opened_path = estrndup(action, strlen(action));
@@ -456,7 +455,7 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		// 					zend_execute(new_op_array);
 		// 					destroy_op_array(new_op_array);
 		// 					efree(new_op_array);
-		// 
+		//
 		// 					if (!EG(exception))
 		// 					{
 		// 						if (EG(return_value_ptr_ptr)) {
@@ -472,24 +471,24 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		// 			}
 		// 		}
 		// 	}
-		// 
+		//
 		// 	sapi_header_op(SAPI_HEADER_SET_STATUS, (void *)code);
 		// 	zend_bailout();
 		// }
 	}
-	
+
 	// SDEBUG("%s %s", op_array->filename, op_array->function_name);
-	
+
 	SUHOSIN7_G(execution_depth)++;
-	
+
 	if (SUHOSIN7_G(max_execution_depth) && SUHOSIN7_G(execution_depth) > SUHOSIN7_G(max_execution_depth)) {
 		suhosin_log(S_EXECUTOR|S_GETCALLER, "maximum execution depth reached - script terminated");
 		suhosin_bailout();
 	}
-	
+
 	// fn = (char *)execute_data->func->op_array.filename;
 	// len = strlen(fn);
-	
+
 	orig_code_type = SUHOSIN7_G(in_code_type);
 	if (execute_data->func->op_array.type == ZEND_EVAL_CODE) {
 		SUHOSIN7_G(in_code_type) = SUHOSIN_EVAL;
@@ -497,7 +496,7 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		// if (suhosin_zend_extension_entry.resource_number != -1) {
 		// 	suhosin_flags = (unsigned long *) &execute_data->func->op_array.reserved[suhosin_zend_extension_entry.resource_number];
 		// 	SDEBUG("suhosin flags: %08lx", *suhosin_flags);
-		// 	
+		//
 		// 	if (*suhosin_flags & SUHOSIN_FLAG_CREATED_BY_EVAL) {
 		// 		SUHOSIN7_G(in_code_type) = SUHOSIN_EVAL;
 		// 	}
@@ -505,7 +504,7 @@ ZEND_API static void suhosin_execute_ex(zend_execute_data *execute_data)
 		// 		goto not_evaled_code;
 		// 	}
 		// }
-		
+
 		if (zend_string_equals_literal(execute_data->func->op_array.filename, "eval()'d code")) {
 			SUHOSIN7_G(in_code_type) = SUHOSIN_EVAL;
 		} // else {
@@ -523,7 +522,7 @@ not_evaled_code:
 /*	if (SUHOSIN7_G(deactivate)) {
 		goto continue_execution;
 	}
-*/	
+*/
 
 	op_array_type = suhosin_detect_codetype(&execute_data->func->op_array);
 	char *filename = execute_data->func->op_array.filename ? ZSTR_VAL(execute_data->func->op_array.filename) : "<unknown>";
@@ -553,7 +552,7 @@ static suhosin_internal_function_handler ihandlers[] = {
 	// { "mail", ih_mail, NULL, NULL, NULL },
 	// { "symlink", ih_symlink, NULL, NULL, NULL },
 	S7_IH_ENTRY0i(symlink)
-	
+
 	// random number functions
 	S7_IH_ENTRY0i(srand)
 	S7_IH_ENTRY0i(mt_srand)
@@ -561,9 +560,9 @@ static suhosin_internal_function_handler ihandlers[] = {
 	S7_IH_ENTRY0i(mt_rand)
 	S7_IH_ENTRY0i(getrandmax)
 	S7_IH_ENTRY0("mt_getrandmax", getrandmax)
-	
+
 	S7_IH_ENTRY0i(function_exists)
-	
+
 	/* Mysqli */
 	// { "mysqli::mysqli", ih_fixusername, (void *)2, NULL, NULL },
 	// { "mysqli_connect", ih_fixusername, (void *)2, NULL, NULL },
@@ -571,7 +570,7 @@ static suhosin_internal_function_handler ihandlers[] = {
 	// { "mysqli_real_connect", ih_fixusername, (void *)3, NULL, NULL },
 	// { "mysqli_change_user", ih_fixusername, (void *)2, NULL, NULL },
 	// { "mysqli::change_user", ih_fixusername, (void *)1, NULL, NULL },
-	
+
 	// { "mysqli::query", ih_querycheck, (void *)1, (void *)1, NULL },
 	// { "mysqli_query", ih_querycheck, (void *)2, (void *)1, NULL },
 	// { "mysqli::multi_query", ih_querycheck, (void *)1, (void *)1, NULL },
@@ -586,14 +585,14 @@ static suhosin_internal_function_handler ihandlers[] = {
 	// { "mysqli_master_query", ih_querycheck, (void *)2, (void *)1, NULL },
 	// { "mysqli_slave_query", ih_querycheck, (void *)2, (void *)1, NULL },
 	// ----
-	
+
 	/* Mysql API - deprecated in PHP 5.5 */
 	// { "mysql_connect", ih_fixusername, (void *)2, NULL, NULL },
 	// { "mysql_pconnect", ih_fixusername, (void *)2, NULL, NULL },
 	// { "mysql_query", ih_querycheck, (void *)1, (void *)1, NULL },
 	// { "mysql_db_query", ih_querycheck, (void *)2, (void *)1, NULL },
 	// { "mysql_unbuffered_query", ih_querycheck, (void *)1, (void *)1, NULL },
-	
+
 #ifdef SUHOSIN7_EXPERIMENTAL
 	/* MaxDB */
 	// { "maxdb::maxdb", ih_fixusername, (void *)2, NULL, NULL },
@@ -602,7 +601,7 @@ static suhosin_internal_function_handler ihandlers[] = {
 	// { "maxdb_real_connect", ih_fixusername, (void *)3, NULL, NULL },
 	// { "maxdb::change_user", ih_fixusername, (void *)1, NULL, NULL },
 	// { "maxdb_change_user", ih_fixusername, (void *)2, NULL, NULL },
-	// 
+	//
 	// { "maxdb_master_query", ih_querycheck, (void *)2, NULL, NULL },
 	// { "maxdb::multi_query", ih_querycheck, (void *)1, NULL, NULL },
 	// { "maxdb_multi_query", ih_querycheck, (void *)2, NULL, NULL },
@@ -621,7 +620,7 @@ static suhosin_internal_function_handler ihandlers[] = {
 	// { "pdo::query", ih_querycheck, (void *)1, NULL, NULL },
 	// { "pdo::prepare", ih_querycheck, (void *)1, NULL, NULL },
 	// { "pdo::exec", ih_querycheck, (void *)1, NULL, NULL },
-	
+
 	/* Oracle OCI8 */
 	// { "ocilogon", ih_fixusername, (void *)1, NULL, NULL },
 	// { "ociplogon", ih_fixusername, (void *)1, NULL, NULL },
@@ -639,7 +638,7 @@ static suhosin_internal_function_handler ihandlers[] = {
 	/* Informix */
 	// { "ifx_connect", ih_fixusername, (void *)2, NULL, NULL },
 	// { "ifx_pconnect", ih_fixusername, (void *)2, NULL, NULL },
-	// 
+	//
 	/* Firebird/InterBase */
 	// { "ibase_connect", ih_fixusername, (void *)2, NULL, NULL },
 	// { "ibase_pconnect", ih_fixusername, (void *)2, NULL, NULL },
@@ -671,21 +670,21 @@ ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, z
 		suhosin_bailout();
 		return;
 	}
-	
+
 	zend_function *func = execute_data->func;
 	if (func == NULL) {
 		suhosin_log(S_EXECUTOR|S_GETCALLER, "execution without function context. something is wrong.");
 		suhosin_bailout();
 	}
-	
-	
+
+
 	// zval *return_value;
 	// zval **return_value_ptr;
 	// zval *this_ptr;
 	int ht = 0;
 	int retval = SUCCESS;
 
-	
+
 	// if (fci) {
 	// 	return_value = *fci->retval_ptr_ptr;
 	// 	return_value_ptr = fci->retval_ptr_ptr;
@@ -698,17 +697,17 @@ ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, z
 	// 	return_value_ptr = (fbc->common.fn_flags & ZEND_ACC_RETURN_REFERENCE) ? &ret->var.ptr : NULL;
 	// 	this_ptr = execute_data_ptr->object;
 		// ht = execute_data->opline->extended_value;
-	// }	
+	// }
 
 	// char *lcname;
 	// int function_name_strlen, free_lcname = 0;
 	// zend_class_entry *ce = NULL;
 	// internal_function_handler *ih;
-	// 
+	//
 	// ce = ((zend_internal_function *) execute_data_ptr->function_state.function)->scope;
 	// lcname = (char *)((zend_internal_function *) execute_data_ptr->function_state.function)->function_name;
 	// function_name_strlen = strlen(lcname);
-	
+
 	/* handle methodcalls correctly */
 	// if (ce != NULL) {
 	// 	char *tmp = (char *) emalloc(function_name_strlen + 2 + ce->name_length + 1);
@@ -730,11 +729,11 @@ ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, z
 		// no function name -> skip whitelists/blacklists
 		goto execute_internal_continue;
 	}
-		
+
 	SDEBUG("function: [%s]/%zu", ZSTR_VAL(function_name), ZSTR_LEN(function_name)) ;
 
 	if (SUHOSIN7_G(in_code_type) == SUHOSIN_EVAL) {
-	
+
 		if (SUHOSIN7_G(eval_whitelist) != NULL) {
 			if (!zend_hash_exists(SUHOSIN7_G(eval_whitelist), function_name)) {
 				suhosin_log(S_EXECUTOR|S_GETCALLER, "eval'd function not whitelisted: %s()", ZSTR_VAL(function_name));
@@ -755,7 +754,7 @@ ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, z
 			}
 		}
 	}
-	
+
 	if (SUHOSIN7_G(func_whitelist) != NULL) {
 		if (!zend_hash_exists(SUHOSIN7_G(func_whitelist), function_name)) {
 			suhosin_log(S_EXECUTOR|S_GETCALLER, "function not whitelisted: %s()", ZSTR_VAL(function_name));
@@ -775,19 +774,19 @@ ZEND_API static void suhosin_execute_internal(zend_execute_data *execute_data, z
 			}
 		}
 	}
-	
+
 	suhosin_internal_function_handler *ih;
 	if ((ih = zend_hash_find_ptr(&ihandler_table, function_name))) {
 		void *handler = execute_data->func->internal_function.handler;
-		
+
 		if (handler != ZEND_FN(display_disabled_function)) {
 			retval = ih->handler(S7_IH_HANDLER_PARAM_PASSTHRU);
 		}
-		
+
 	}
 
 execute_internal_continue:
-	
+
 	if (retval == SUCCESS) {
 		old_execute_internal(execute_data, return_value);
 	}
@@ -813,13 +812,13 @@ execute_internal_bailout:
 // 	if (zo_set_oe_ex != NULL) {
 // 		return ZEND_HASH_APPLY_STOP;
 // 	}
-// 
+//
 // 	if (extension->handle != NULL) {
-// 	
+//
 // 		zo_set_oe_ex = (void *)DL_FETCH_SYMBOL(extension->handle, "zend_optimizer_set_oe_ex");
-// 	
+//
 // 	}
-// 
+//
 // 	return 0;
 // }
 /* }}} */
@@ -831,29 +830,29 @@ void suhosin_hook_execute()
 {
 	old_execute_ex = zend_execute_ex;
 	zend_execute_ex = suhosin_execute_ex;
-	
+
 /*	old_compile_file = zend_compile_file;
 	zend_compile_file = suhosin_compile_file; */
 
 // #if ZO_COMPATIBILITY_HACK_TEMPORARY_DISABLED
-// 	if (zo_set_oe_ex == NULL) {	
+// 	if (zo_set_oe_ex == NULL) {
 // 		zo_set_oe_ex = (void *)DL_FETCH_SYMBOL(NULL, "zend_optimizer_set_oe_ex");
 // 	}
-// 	if (zo_set_oe_ex == NULL) {	
+// 	if (zo_set_oe_ex == NULL) {
 // 		zend_llist_apply(&zend_extensions, (llist_apply_func_t)function_lookup);
 // 	}
-// 
+//
 // 	if (zo_set_oe_ex != NULL) {
 // 		old_execute_ZO = zo_set_oe_ex(suhosin_execute_ZO);
 // 	}
 // #endif
-	
+
 	old_execute_internal = zend_execute_internal;
 	if (old_execute_internal == NULL) {
 		old_execute_internal = execute_internal;
 	}
 	zend_execute_internal = suhosin_execute_internal;
-	
+
 	/* register internal function handlers */
 	zend_hash_init(&ihandler_table, 16, NULL, NULL, 1);
 	suhosin_internal_function_handler *ih = &ihandlers[0];
@@ -863,8 +862,8 @@ void suhosin_hook_execute()
 		zend_hash_str_add_ptr(&ihandler_table, ih->name, strlen(ih->name), ih);
 		ih++;
 	}
-		
-	
+
+
 	/* Add additional protection layer, that SHOULD
 	   catch ZEND_INCLUDE_OR_EVAL *before* the engine tries
 	   to execute */
@@ -872,7 +871,7 @@ void suhosin_hook_execute()
 		old_zend_stream_open = zend_stream_open_function;
 	}
 	zend_stream_open_function = suhosin_zend_stream_open;
-	
+
 }
 /* }}} */
 
@@ -888,7 +887,7 @@ void suhosin_unhook_execute()
 // #endif
 
 	zend_execute_ex = old_execute_ex;
-		
+
 /*	zend_compile_file = old_compile_file; */
 
 	if (old_execute_internal == execute_internal) {
@@ -896,10 +895,10 @@ void suhosin_unhook_execute()
 	}
 	zend_execute_internal = old_execute_internal;
 	zend_hash_clean(&ihandler_table);
-	
+
 	/* remove zend_open protection */
 	zend_stream_open_function = old_zend_stream_open;
-	
+
 }
 /* }}} */
 
