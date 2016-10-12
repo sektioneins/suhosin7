@@ -28,7 +28,7 @@ S7_IH_FUNCTION(preg_replace)
 	if (Z_TYPE_P(regex) != IS_ARRAY) {
 		convert_to_string_ex(regex);
 		// regex is string
-		
+
 		if (strlen(Z_STRVAL_P(regex)) != Z_STRLEN_P(regex)) {
 			suhosin_log(S_EXECUTOR, "string termination attack on first preg_replace parameter detected");
 			if (!SUHOSIN7_G(simulation)) {
@@ -38,7 +38,7 @@ S7_IH_FUNCTION(preg_replace)
 		}
 	} else {
 		// regex is array
-		
+
 		/* For each entry in the regex array, get the entry */
 		zval *regex_entry;
 		ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(regex), regex_entry) {
@@ -70,7 +70,7 @@ S7_IH_FUNCTION(symlink)
 	if (SUHOSIN7_G(executor_allow_symlink)) {
 		return SUCCESS;
 	}
-	
+
 	if (PG(open_basedir) && PG(open_basedir)[0]) {
 		suhosin_log(S_EXECUTOR, "symlink called during open_basedir");
 		if (!SUHOSIN7_G(simulation)) {
@@ -78,7 +78,7 @@ S7_IH_FUNCTION(symlink)
 			return FAILURE;
 		}
 	}
-	
+
 	return SUCCESS;
 }
 
@@ -86,7 +86,7 @@ S7_IH_FUNCTION(function_exists)
 {
 	zend_string *name;
 	zend_string *lcname;
-	
+
 #ifndef FAST_ZPP
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &name) == FAILURE) {
 		return FAILURE;
@@ -114,7 +114,7 @@ S7_IH_FUNCTION(function_exists)
 	zend_bool retval = (func && (func->type != ZEND_INTERNAL_FUNCTION ||
 		func->internal_function.handler != zif_display_disabled_function));
 	if (retval == 0) {
-		goto function_exists_return;
+		goto ret;
 	}
 
 	/* Now check if function is forbidden by Suhosin */
@@ -122,29 +122,29 @@ S7_IH_FUNCTION(function_exists)
 		if (SUHOSIN7_G(eval_whitelist) != NULL) {
 			if (!zend_hash_exists(SUHOSIN7_G(eval_whitelist), lcname)) {
 			    retval = 0;
-				goto function_exists_return;
+				goto ret;
 			}
 		} else if (SUHOSIN7_G(eval_blacklist) != NULL) {
 			if (zend_hash_exists(SUHOSIN7_G(eval_blacklist), lcname)) {
 			    retval = 0;
-				goto function_exists_return;
+				goto ret;
 			}
 		}
 	}
-	
+
 	if (SUHOSIN7_G(func_whitelist) != NULL) {
 		if (!zend_hash_exists(SUHOSIN7_G(func_whitelist), lcname)) {
 		    retval = 0;
-			goto function_exists_return;
+			goto ret;
 		}
 	} else if (SUHOSIN7_G(func_blacklist) != NULL) {
 		if (zend_hash_exists(SUHOSIN7_G(func_blacklist), lcname)) {
 		    retval = 0;
-			goto function_exists_return;
+			goto ret;
 		}
 	}
 
-function_exists_return:
+ret:
 	zend_string_release(lcname);
 	RETVAL_BOOL(retval);
 	return FAILURE;
@@ -157,11 +157,11 @@ function_exists_return:
 // 	char *tmp;
 // 	int to_len, message_len, headers_len;
 // 	int subject_len, extra_cmd_len;
-// 
+//
 // 	if (SUHOSIN7_G(mailprotect) == 0) {
 // 		return (0);
 // 	}
-// 
+//
 // 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sss|ss",
 // 						  &to, &to_len,
 // 						  &subject, &subject_len,
@@ -172,7 +172,7 @@ function_exists_return:
 // 		RETVAL_FALSE;
 // 		return (1);
 // 	}
-// 
+//
 // 	if (headers_len > 0 && headers &&
 // 		(strstr(headers, "\n\n") || strstr(headers, "\n\r\n") /* double newline */
 // 			|| *headers == '\n' || (headers[0] == '\r' && headers[1] == '\n') /* starts with newline */
@@ -183,7 +183,7 @@ function_exists_return:
 // 			return (1);
 // 		}
 // 	}
-// 
+//
 // 	/* check for spam attempts with buggy webforms */
 // 	if (to_len > 0 && to) {
 // 		do {
@@ -201,7 +201,7 @@ function_exists_return:
 // 			}
 // 		}
 // 	}
-// 
+//
 // 	if (subject_len > 0 && subject) {
 // 		do {
 // 			if ((tmp = strchr(subject, '\n')) == NULL)
@@ -218,7 +218,7 @@ function_exists_return:
 // 			}
 // 		}
 // 	}
-// 		
+//
 // 	if (SUHOSIN7_G(mailprotect) > 1) {
 // 		/* search for to, cc or bcc headers */
 // 		if (headers_len > 0 && headers != NULL) {
@@ -229,7 +229,7 @@ function_exists_return:
 // 					return (1);
 // 				}
 // 			}
-// 			
+//
 // 			if (strncasecmp(headers, "cc:", sizeof("cc:") - 1) == 0 || suhosin_strcasestr(headers, "\ncc:")) {
 // 				suhosin_log(S_MAIL, "mail() - CC: headers aren't allowed in the headers parameter.");
 // 				if (!SUHOSIN7_G(simulation)) {
@@ -237,7 +237,7 @@ function_exists_return:
 // 					return (1);
 // 				}
 // 			}
-// 
+//
 // 			if (strncasecmp(headers, "bcc:", sizeof("bcc:") - 1) == 0 || suhosin_strcasestr(headers, "\nbcc:")) {
 // 				suhosin_log(S_MAIL, "mail() - BCC: headers aren't allowed in the headers parameter.");
 // 				if (!SUHOSIN7_G(simulation)) {
@@ -247,7 +247,7 @@ function_exists_return:
 // 			}
 // 		}
 // 	}
-// 
+//
 // 	return (0);
 // }
 
@@ -256,7 +256,7 @@ function_exists_return:
 // #define SQLSTATE_STRING     2
 // #define SQLSTATE_COMMENT    3
 // #define SQLSTATE_MLCOMMENT  4
-// 
+//
 // int ih_querycheck(IH_HANDLER_PARAMS)
 // {
 // 	void **p = zend_vm_stack_top() - 1;
@@ -269,21 +269,21 @@ function_exists_return:
 // 	int state = SQLSTATE_SQL;
 // 	int cnt_union = 0, cnt_select = 0, cnt_comment = 0, cnt_opencomment = 0;
 // 	int mysql_extension = 0;
-// 
-// 	
+//
+//
 // 	SDEBUG("function: %s", ih->name);
 // 	arg_count = (unsigned long) *p;
-// 
+//
 // 	if (ht < (long) ih->arg1) {
 // 		return (0);
 // 	}
-//     
+//
 // 	if ((long) ih->arg2) {
 //     	    mysql_extension = 1;
 // 	}
-// 	
+//
 // 	arg = (zval **) p - (arg_count - (long) ih->arg1 + 1); /* count from 0 */
-// 
+//
 // 	backup = *arg;
 // 	if (Z_TYPE_P(backup) != IS_STRING) {
 // 		return (0);
@@ -291,10 +291,10 @@ function_exists_return:
 // 	len = Z_STRLEN_P(backup);
 // 	query = Z_STRVAL_P(backup);
 // 	SDEBUG("SQL |%s|", query);
-// 	
+//
 // 	s = query;
 // 	e = s+len;
-// 	
+//
 // 	while (s < e) {
 // 	    switch (state)
 // 	    {
@@ -363,7 +363,7 @@ function_exists_return:
 //     		    break;
 // 		case SQLSTATE_COMMENT:
 //     		    while (s[0] && s[0] != '\n') {
-//     			s++;        
+//     			s++;
 //     		    }
 //     		    state = SQLSTATE_SQL;
 //     		    break;
@@ -381,39 +381,39 @@ function_exists_return:
 // 	if (state == SQLSTATE_MLCOMMENT) {
 // 	    cnt_opencomment = 1;
 // 	}
-// 	
+//
 // 	if (cnt_opencomment && SUHOSIN7_G(sql_opencomment)>0) {
 // 	    suhosin_log(S_SQL, "Open comment in SQL query: '%*s'", len, query);
 // 	    if (SUHOSIN7_G(sql_opencomment)>1) {
 // 		suhosin_bailout();
 // 	    }
 // 	}
-// 	
+//
 // 	if (cnt_comment && SUHOSIN7_G(sql_comment)>0) {
 // 	    suhosin_log(S_SQL, "Comment in SQL query: '%*s'", len, query);
 // 	    if (SUHOSIN7_G(sql_comment)>1) {
 // 		suhosin_bailout();
 // 	    }
 // 	}
-// 
+//
 // 	if (cnt_union && SUHOSIN7_G(sql_union)>0) {
 // 	    suhosin_log(S_SQL, "UNION in SQL query: '%*s'", len, query);
 // 	    if (SUHOSIN7_G(sql_union)>1) {
 // 		suhosin_bailout();
 // 	    }
 // 	}
-// 
+//
 // 	if (cnt_select>1 && SUHOSIN7_G(sql_mselect)>0) {
 // 	    suhosin_log(S_SQL, "Multiple SELECT in SQL query: '%*s'", len, query);
 // 	    if (SUHOSIN7_G(sql_mselect)>1) {
 // 		suhosin_bailout();
 // 	    }
 // 	}
-//     
+//
 // 	return (0);
 // }
-// 
-// 
+//
+//
 // int ih_fixusername(IH_HANDLER_PARAMS)
 // {
 // 	void **p = zend_vm_stack_top() - 1;
@@ -422,21 +422,21 @@ function_exists_return:
 // 	char *prefix, *postfix, *user, *user_match, *cp;
 // 	zval *backup, *my_user;
 // 	int prefix_len, postfix_len, len;
-// 	
+//
 // 	SDEBUG("function (fixusername): %s", ih->name);
-// 	
+//
 // 	prefix = SUHOSIN7_G(sql_user_prefix);
 // 	postfix = SUHOSIN7_G(sql_user_postfix);
 // 	user_match = SUHOSIN7_G(sql_user_match);
-// 	
+//
 // 	arg_count = (unsigned long) *p;
-// 
+//
 // 	if (ht < (long) ih->arg1) {
 // 		return (0);
 // 	}
-// 	
+//
 // 	arg = (zval **) p - (arg_count - (long) ih->arg1 + 1); /* count from 0 */
-// 
+//
 // 	backup = *arg;
 // 	if (Z_TYPE_P(backup) != IS_STRING) {
 // 		user = "";
@@ -445,7 +445,7 @@ function_exists_return:
 // 		len = Z_STRLEN_P(backup);
 // 		user = Z_STRVAL_P(backup);
 // 	}
-// 
+//
 // 	cp = user;
 // 	while (cp < user+len) {
 // 		if (*cp < 32) {
@@ -458,7 +458,7 @@ function_exists_return:
 // 		}
 // 		cp++;
 // 	}
-// 
+//
 // 	if ((prefix != NULL && prefix[0]) || (postfix != NULL && postfix[0])) {
 // 		if (prefix == NULL) {
 // 			prefix = "";
@@ -468,18 +468,18 @@ function_exists_return:
 // 		}
 // 		prefix_len = strlen(prefix);
 // 		postfix_len = strlen(postfix);
-// 		
+//
 // 		MAKE_STD_ZVAL(my_user);
 // 		my_user->type = IS_STRING;
 // 		my_user->value.str.len = spprintf(&my_user->value.str.val, 0, "%s%s%s", prefix, user, postfix);
-// 	
+//
 // 		/* XXX: memory_leak? */
-// 		*arg = my_user;	
-// 		
+// 		*arg = my_user;
+//
 // 		len = Z_STRLEN_P(my_user);
 // 		user = Z_STRVAL_P(my_user);
 // 	}
-// 	
+//
 // 	if (user_match && user_match[0]) {
 // #ifdef HAVE_FNMATCH
 // 		if (fnmatch(user_match, user, 0) != 0) {
@@ -498,10 +498,10 @@ function_exists_return:
 // 		}
 // #endif
 // 	}
-// 	
+//
 // 	SDEBUG("function: %s - user: %s", ih->name, user);
-// 
+//
 // 	return (0);
 // }
-// 
-// 
+//
+//
