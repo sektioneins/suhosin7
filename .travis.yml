@@ -6,6 +6,7 @@ group: edge
 
 php:
   - 7.0
+  - 7.1
 
 env:
   - CC=gcc-4.8 CFLAGS=""

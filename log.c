@@ -284,7 +284,11 @@ log_sapi:
 	/* SAPI Logging activated? */
 	// SDEBUG("(suhosin_log) log_syslog: %ld - log_sapi: %ld - log_script: %ld - log_phpscript: %ld", SUHOSIN7_G(log_syslog), SUHOSIN7_G(log_sapi), SUHOSIN7_G(log_script), SUHOSIN7_G(log_phpscript));
 	if (sapi_module.log_message && ((SUHOSIN7_G(log_sapi)|S_INTERNAL) & loglevel)!=0) {
+#if PHP_VERSION_ID < 70100
 		sapi_module.log_message(buf);
+#else /* PHP >= 7.1 */
+		sapi_module.log_message(buf, -1);
+#endif
 	}
 	if ((SUHOSIN7_G(log_stdout) & loglevel)!=0) {
 		fprintf(stdout, "%s\n", buf);

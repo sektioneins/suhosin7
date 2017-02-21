@@ -201,7 +201,7 @@ PHP_FUNCTION(suhosin_extract)
 				if (var_exists && ZSTR_LEN(var_name) == sizeof("GLOBALS")-1 && !strcmp(ZSTR_VAL(var_name), "GLOBALS")) {
 					break;
 				}
-				if (var_exists && ZSTR_LEN(var_name) == sizeof("this")-1  && !strcmp(ZSTR_VAL(var_name), "this") && EG(scope) && ZSTR_LEN(EG(scope)->name) != 0) {
+				if (var_exists && ZSTR_LEN(var_name) == sizeof("this")-1  && !strcmp(ZSTR_VAL(var_name), "this") /* && EG(scope) && ZSTR_LEN(EG(scope)->name) != 0 */) {
 					break;
 				}
 				ZVAL_STR_COPY(&final_name, var_name);

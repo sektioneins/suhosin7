@@ -265,7 +265,7 @@ void suhosin_hook_session()
 
 	suhosin_hook_session_module();
 
-#if HAVE_DEV_URANDOM
+#if HAVE_DEV_URANDOM && PHP_VERSION_ID < 70100
 	/* increase session identifier entropy */
 	if (SESSION_G(entropy_length) == 0 || SESSION_G(entropy_file) == NULL) {
 			SESSION_G(entropy_length) = 16;
