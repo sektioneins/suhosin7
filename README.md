@@ -4,22 +4,10 @@
 
 **WARNING: THIS SOFTWARE IS PRE-ALPHA SOFTWARE. DO NOT ATTEMPT TO RUN IN PRODUCTION**
 
+## PHP 7.3 support and snufflepagus
 
-## Reporting issues
-The issue tracker will be available once Suhosin7 can actually be compiled.
+For a suitable Suhosin7 replacement with PHP 7.3 support, please have a look at [snufflepagus](https://github.com/nbs-system/snuffleupagus) 
 
-When reporting bugs, please include as much information needed to reproduce the bug
-* PHP version
-* Suhosin version / GIT revision / ...
-* Installed from OS package manager?
-* Operating System
-* Description
-* Proof of Concept, e.g. PHP code
-* How to trigger the bug, e.g. PHP command line or Apache configuration
-* List of loaded PHP extensions, if problem is related to interaction with other extensions
+## Future plans (2019)
 
-When reporting feature requests, please consider writing a patch yourself and provide a pull request.
-
-## FAQ
-
-nothing yet.
+Suhosin7 development has been suspended for quite some time now. But during that time, a lot of ideas came to mind on how to improve PHP security. Plans are on their way to explore some of these ideas based on the fabulous work done with snufflepagus.
