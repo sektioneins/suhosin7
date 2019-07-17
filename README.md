@@ -8,6 +8,6 @@
 
 For a suitable Suhosin7 replacement with PHP 7.3 support, please have a look at [snufflepagus](https://github.com/nbs-system/snuffleupagus) 
 
-## Future plans (2019)
+## Future plans (2019) and Suhosin-NG
 
-Suhosin7 development has been suspended for quite some time now. But during that time, a lot of ideas came to mind on how to improve PHP security. Plans are on their way to explore some of these ideas based on the fabulous work done with snufflepagus.
+Suhosin7 development has been suspended for quite some time now. But during that time, a lot of ideas came to mind on how to improve PHP security. With [Suhosin-NG](https://github.com/sektioneins/suhosin-ng) plans are on their way to explore some of these ideas based on the fabulous work done with snufflepagus.
