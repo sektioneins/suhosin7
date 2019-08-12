@@ -23,8 +23,8 @@ extern zend_module_entry suhosin7_module_entry;
 
 #define SUHOSIN7_EXT_VERSION  "0.10.0dev"
 
-#if PHP_VERSION_ID < 70000 | PHP_VERSION_ID >= 70200
-#error Suhosin7 works with PHP 7.0 and 7.1 only! Looking for Suhosin for PHP 5.x? Take a look at https://www.suhosin.org/
+#if PHP_VERSION_ID < 70000 
+#error Suhosin7 works with PHP 7.x only! Looking for Suhosin for PHP 5.x? Take a look at https://www.suhosin.org/
 #endif
 
 #ifdef PHP_WIN32
