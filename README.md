@@ -6,7 +6,7 @@
 
 ## PHP 7.3 support and snufflepagus
 
-For a suitable Suhosin7 replacement with PHP 7.3 support, please have a look at [snufflepagus](https://github.com/nbs-system/snuffleupagus) 
+For a suitable Suhosin7 replacement with PHP 7.3 support, please have a look at [snufflepagus](https://github.com/jvoisin/snuffleupagus) 
 
 ## Future plans (2019) and Suhosin-NG
 
